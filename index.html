@@ -50,7 +50,6 @@
         <button class="nav-btn" onclick="showScreen(6)">5. Oefening A</button>
     </nav>
 
-    <!-- LOGIN SCHERM -->
     <div id="screen-1" class="screen active">
         <div id="screen-login">
             <div class="login-box">
@@ -74,7 +73,6 @@
         </div>
     </div>
 
-    <!-- UITLEG SCHERM -->
     <div id="screen-2" class="screen">
         <div class="content-container">
             <h1>Onderwerp van Les 3</h1>
@@ -84,11 +82,10 @@
                 <li>Het is géén persoonsvorm</li>
                 <li>De persoonsvorm is een vorm van <em>zijn</em>, <em>hebben</em> of <em>worden</em>.</li>
             </ul>
-            <p style="background: #fff3cd; padding: 10px; border-radius: 5px;">VRAAG AAN DE DOCENT OEFENING 2 EEN KEERTJE VOOR TE DOEN!</p>
+            <p>VRAAG AAN DE DOCENT OEFENING 2 EEN KEERTJE VOOR TE DOEN!</p>
         </div>
     </div>
 
-    <!-- DIGIBORD SCHERM -->
     <div id="screen-3" class="screen">
         <canvas id="canvas-3" class="drawing-canvas"></canvas>
         <div id="label-layer-3" class="drag-layer"></div>
@@ -100,7 +97,6 @@
         </div>
     </div>
 
-    <!-- AFBEELDING OEFENING 1 -->
     <div id="screen-4" class="screen">
         <img src="Q3lesmaterialQ1les3.png" class="bg-image" alt="Lesmateriaal 1">
         <canvas id="canvas-4" class="drawing-canvas"></canvas>
@@ -113,7 +109,6 @@
         </div>
     </div>
 
-    <!-- AFBEELDING OEFENING 2 -->
     <div id="screen-5" class="screen">
         <img src="Q3lesmaterialQ1les3.png" class="bg-image" alt="Lesmateriaal 2">
         <canvas id="canvas-5" class="drawing-canvas"></canvas>
@@ -126,7 +121,6 @@
         </div>
     </div>
 
-    <!-- EXTERNE OEFENING -->
     <div id="screen-6" class="screen"><iframe src="https://learningapps.org/watch?v=pbsnzhgyn24"></iframe></div>
 
     <script type="module">
@@ -143,7 +137,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // State Management
         window.currentClass = "";
         let isPenActive = false;
         let drawing = false;
@@ -152,7 +145,7 @@
         let dragLid = null;
         let dragOffset = { x: 0, y: 0 };
 
-        // --- Navigatie & Login ---
+        // --- EXPLICIT WINDOW BINDING VOOR ONCLICK ---
         window.login = () => {
             const klas = document.getElementById('classSelect').value;
             if(!klas) return alert("Kies een klas!");
@@ -179,7 +172,7 @@
             }
         };
 
-        // --- Drag & Drop Logica ---
+        // --- DRAG & DROP ---
         function setupGlobalDragEvents() {
             const onMove = (e) => {
                 if (!draggingElement) return;
@@ -195,7 +188,6 @@
                     y: parseInt(draggingElement.style.top) 
                 });
                 draggingElement = null;
-                dragLid = null;
             };
             window.addEventListener('mousemove', onMove); window.addEventListener('touchmove', onMove);
             window.addEventListener('mouseup', onEnd); window.addEventListener('touchend', onEnd);
@@ -207,12 +199,10 @@
             el.id = `label-${lid}`;
             el.style.left = obj.x + 'px'; el.style.top = obj.y + 'px';
             el.innerHTML = `<span>${obj.text}</span><i class="fa-solid fa-circle-xmark delete-icon"></i>`;
-            
             el.querySelector('.delete-icon').onclick = (e) => {
                 e.stopPropagation();
                 remove(ref(db, `classes/${window.currentClass}/labels/s${sid}/${lid}`));
             };
-
             const startDrag = (e) => {
                 if (isPenActive) return;
                 draggingElement = el; dragSid = sid; dragLid = lid;
@@ -221,17 +211,15 @@
                 const clientY = e.clientY || (e.touches && e.touches[0].clientY);
                 dragOffset.x = clientX - rect.left; dragOffset.y = clientY - rect.top;
             };
-
             el.addEventListener('mousedown', startDrag); el.addEventListener('touchstart', startDrag);
             document.getElementById(`label-layer-${sid}`).appendChild(el);
         }
 
-        // --- Teken Logica ---
+        // --- DRAWING ---
         function setupDrawing() {
             [3, 4, 5].forEach(id => {
                 const canvas = document.getElementById(`canvas-${id}`);
                 const ctx = canvas.getContext('2d');
-                
                 const draw = (e) => {
                     if(!drawing || !isPenActive) return;
                     ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#d32f2f';
@@ -240,14 +228,9 @@
                     const y = (e.clientY || e.touches[0].clientY) - rect.top;
                     ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y);
                 };
-
-                canvas.addEventListener('mousedown', (e) => { if(isPenActive) { drawing = true; draw(e); }});
-                canvas.addEventListener('touchstart', (e) => { if(isPenActive) { drawing = true; draw(e); }});
-                canvas.addEventListener('mousemove', draw);
-                canvas.addEventListener('touchmove', draw);
-                
-                window.addEventListener('mouseup', () => { if(drawing) { drawing = false; ctx.beginPath(); saveDrawing(id, canvas); }});
-                window.addEventListener('touchend', () => { if(drawing) { drawing = false; ctx.beginPath(); saveDrawing(id, canvas); }});
+                canvas.onmousedown = canvas.ontouchstart = (e) => { if(isPenActive) { drawing = true; draw(e); }};
+                canvas.onmousemove = canvas.ontouchmove = draw;
+                window.onmouseup = window.ontouchend = () => { if(drawing) { drawing = false; ctx.beginPath(); saveDrawing(id, canvas); }};
             });
         }
 
@@ -262,7 +245,15 @@
             set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL());
         }
 
-        // --- Sync & Database ---
+        window.clearDrawings = (id) => {
+            const canvas = document.getElementById(`canvas-${id}`);
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            remove(ref(db, `classes/${window.currentClass}/drawings/s${id}`));
+        };
+
+        window.clearBoard = (id) => remove(ref(db, `classes/${window.currentClass}/labels/s${id}`));
+
+        // --- SYNC ---
         function setupSync() {
             [3, 4, 5].forEach(id => {
                 onValue(ref(db, `classes/${window.currentClass}/labels/s${id}`), (snap) => {
@@ -270,28 +261,22 @@
                     Object.keys(data).forEach(lid => {
                         let el = document.getElementById(`label-${lid}`);
                         if (!el) createHTMLLabel(id, lid, data[lid]);
-                        else if (dragLid !== lid) { 
-                            el.style.left = data[lid].x + 'px'; 
-                            el.style.top = data[lid].y + 'px'; 
-                        }
+                        else if (dragLid !== lid) { el.style.left = data[lid].x + 'px'; el.style.top = data[lid].y + 'px'; }
                     });
-                    const layer = document.getElementById(`label-layer-${id}`);
-                    layer.querySelectorAll('.draggable-label').forEach(el => {
+                    document.getElementById(`label-layer-${id}`).querySelectorAll('.draggable-label').forEach(el => {
                         if (!data[el.id.replace('label-', '')]) el.remove();
                     });
                 });
-
                 onValue(ref(db, `classes/${window.currentClass}/drawings/s${id}`), (snap) => {
                     if(drawing) return;
                     const canvas = document.getElementById(`canvas-${id}`);
-                    const ctx = canvas.getContext('2d');
                     const img = new Image();
                     img.onload = () => {
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(img, 0, 0);
+                        canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+                        canvas.getContext('2d').drawImage(img, 0, 0);
                     };
                     if(snap.val()) img.src = snap.val();
-                    else ctx.clearRect(0,0,canvas.width,canvas.height);
+                    else canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
                 });
             });
         }
@@ -312,20 +297,9 @@
             document.getElementById('secretInput').value = "";
         };
 
-        window.clearDrawings = (id) => {
-            const canvas = document.getElementById(`canvas-${id}`);
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            remove(ref(db, `classes/${window.currentClass}/drawings/s${id}`));
-        };
-
-        window.clearBoard = (id) => remove(ref(db, `classes/${window.currentClass}/labels/s${id}`));
-
         function resizeCanvas(id) {
             const canvas = document.getElementById(`canvas-${id}`);
-            if (canvas) {
-                canvas.width = canvas.offsetWidth;
-                canvas.height = canvas.offsetHeight;
-            }
+            if(canvas) { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
         }
 
         window.resetInputs = () => {
