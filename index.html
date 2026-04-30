@@ -178,8 +178,8 @@
             window.currentClass = klas;
             window.userName = document.getElementById('studentName').value || "Anoniem";
             
-            // Verberg login overlay en toon nav
-            document.getElementById('screen-1').style.display = 'none';
+            // Fix: Verwijder active van scherm 1 en toon nav
+            document.getElementById('screen-1').classList.remove('active');
             document.getElementById('main-nav').style.display = 'flex';
             
             window.showScreen(2);
@@ -190,7 +190,9 @@
 
         window.showScreen = (n) => {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(`screen-${n}`).classList.add('active');
+            const target = document.getElementById(`screen-${n}`);
+            if(target) target.classList.add('active');
+            
             document.querySelectorAll('.nav-btn').forEach((btn, i) => {
                 btn.classList.toggle('active', (i+2) === n);
             });
@@ -204,7 +206,7 @@
             
             push(ref(db, `classes/${klas}/labels/s3`), { text: txt, x: 100, y: 100 })
                 .then(() => {
-                    alert("Zin naar het digibord gestuurd!");
+                    alert("Zin naar het digibord (Scherm 3) gestuurd!");
                     document.getElementById('secretInput').value = "";
                 });
         };
@@ -247,7 +249,8 @@
                 dragOffset.x = clientX - rect.left; dragOffset.y = clientY - rect.top;
             };
             el.addEventListener('mousedown', startDrag); el.addEventListener('touchstart', startDrag);
-            document.getElementById(`label-layer-${sid}`).appendChild(el);
+            const layer = document.getElementById(`label-layer-${sid}`);
+            if(layer) layer.appendChild(el);
         }
 
         function setupDrawing() {
