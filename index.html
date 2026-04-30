@@ -76,21 +76,27 @@
         </div>
     </div>
 
-    <!-- Scherm 2: Didactiek -->
+    <!-- Scherm 2: Instructie -->
     <div id="screen-2" class="screen">
         <div class="content-container">
-            <h2>Onvoltooid Verleden Tijd (OVT)</h2>
-            <p>Bij het muteren streven we naar een <strong>filmische OVT</strong>.</p>
-            <hr>
-            <h3>Hoe herken je de valkuil?</h3>
-            <p>Zoek de <strong>Persoonsvorm</strong>. Is dit een vorm van <em>'hebben'</em>, <em>'zijn'</em> of <em>'worden'</em>? <strong>Let dan op!</strong> Je bent waarschijnlijk aan het stoppen/beschrijven in plaats van filmisch schrijven.</p>
-            <h3>Het Voltooid Deelwoord (VD)</h3>
-            <p>Het tweede werkwoord in het gezegde is vaak een voltooid deelwoord. Je herkent het zo:</p>
+            <h2>Instructie: Onvoltooid Verleden Tijd (OVT)</h2>
+            
+            <h3>Zoek de persoonsvorm</h3>
+            <p>Is het een vorm van <strong>'hebben'</strong>, <strong>'zijn'</strong> of <strong>'worden'</strong>?<br>
+            <strong style="color: var(--accent);">Let dan op! Ik stop.</strong></p>
+            
+            <h3>Zoek het gezegde</h3>
+            <p>Het tweede werkwoord in het gezegde is vaak een <strong>voltooid deelwoord</strong>.</p>
+            
+            <h3>Voltooid deelwoord herken je zo:</h3>
             <ul>
-                <li>Begint vaak met <strong>ge-</strong> of <strong>be-</strong></li>
-                <li>Er staat een hulpwerkwoord (hebben/zijn/worden) bij.</li>
+                <li>Vaak begint een voltooid deelwoord met <strong>'ge-'</strong> of <strong>'be-'</strong></li>
+                <li>In het gezegde staat een vorm van <strong>'hebben'</strong>, <strong>'zijn'</strong> of <strong>'worden'</strong></li>
             </ul>
-            <p><em>Voorbeeld:</em> "Ik <u>ben</u> naar de plein <u>gereden</u>." → <strong>OVT:</strong> "Ik reed naar het plein."</p>
+            
+            <hr>
+            <p><em>Voorbeeld:</em> "Ik <u>ben</u> naar het plein <u>gereden</u>."<br>
+            → <strong>OVT:</strong> "Ik reed naar het plein."</p>
         </div>
     </div>
 
@@ -139,15 +145,24 @@
         </div>
     </div>
 
-    <!-- Scherm 7: Video & Feed -->
+    <!-- Scherm 7: Video & Live Mutatie -->
     <div id="screen-7" class="screen">
         <div style="height: 300px; background: #000; display: flex; justify-content: center;">
             <iframe width="560" height="315" src="https://www.youtube.com/embed/BmEYOYBr1t8?end=23" frameborder="0" allowfullscreen></iframe>
         </div>
+        
+        <div style="background: #e9ecef; padding: 10px; margin: 10px; border-radius: 8px;">
+            <strong>OC-melding:</strong><br>
+            Ga naar het Regentesseplein in Den Haag. Daar worden fatbikes gecontroleerd. 
+            Jullie gaan ter plaatse en ondersteunen de collega's. De eerste fatbike controleren jullie. 
+            Stel daar een mutatie van op.
+        </div>
+        
         <div class="live-feed" id="liveFeed"></div>
+        
         <div style="padding: 10px; background: white; border-top: 2px solid var(--primary);">
-            <input type="text" id="mutationIn" placeholder="Schrijf hier je mutatie (OVT)...">
-            <button onclick="postMutation()" style="width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 5px;">Plaats Mutatie</button>
+            <textarea id="mutationIn" rows="3" placeholder="Schrijf hier je mutatie (OVT)..." style="width: 100%; padding: 8px; margin-bottom: 8px;"></textarea>
+            <button onclick="postMutation()" style="width: 100%; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 5px; font-weight: bold;">Lever mutatie in</button>
         </div>
     </div>
 
@@ -166,7 +181,6 @@
         const db = getDatabase(app);
         window.currentClass = "";
         
-        // Pen state per scherm
         let penActive = { 3: false, 5: false, 6: false };
         let drawing = false;
         let draggingElement = null;
@@ -180,7 +194,6 @@
             window.currentClass = klas;
             window.userName = document.getElementById('studentName').value || "Anoniem";
             
-            // Fix: Verwijder active van scherm 1 en toon nav
             document.getElementById('screen-1').classList.remove('active');
             document.getElementById('main-nav').style.display = 'flex';
             
@@ -345,7 +358,12 @@
             if (!window.userName) return alert("Log eerst in!");
             const txt = document.getElementById('mutationIn').value;
             if(!txt.trim()) return;
-            push(ref(db, `classes/${window.currentClass}/feed`), { user: window.userName, text: txt, feedback: "" });
+            push(ref(db, `classes/${window.currentClass}/feed`), { 
+                user: window.userName, 
+                text: txt.trim(), 
+                feedback: "",
+                timestamp: Date.now()
+            });
             document.getElementById('mutationIn').value = "";
         };
 
@@ -369,21 +387,35 @@
                     } else ctx.clearRect(0,0,canvas.width,canvas.height);
                 });
             });
-            onValue(ref(db, `classes/${window.currentClass}/feed`), (snap) => {
+            
+            const feedRef = ref(db, `classes/${window.currentClass}/feed`);
+            onValue(feedRef, (snap) => {
                 const feed = document.getElementById('liveFeed');
                 if(!feed) return;
+                const wasAtBottom = feed.scrollHeight - feed.scrollTop <= 50;
                 feed.innerHTML = "";
                 const data = snap.val() || {};
-                Object.keys(data).reverse().forEach(key => {
+                Object.keys(data).sort((a,b) => (data[a].timestamp||0) - (data[b].timestamp||0)).forEach(key => {
                     const m = data[key];
                     feed.innerHTML += `
-                        <div class="mutation-card">
-                            <strong>${m.user}:</strong> ${m.text}
+                        <div class="mutation-card" data-id="${key}">
+                            <strong>${escapeHtml(m.user)}:</strong> ${escapeHtml(m.text)}
                             <div class="feedback-area" contenteditable="true" onblur="updateFeedback('${key}', this.innerText)">
-                                ${m.feedback || '<em>Klik hier voor feedback...</em>'}
+                                ${m.feedback ? escapeHtml(m.feedback) : '<em>Klik hier voor feedback...</em>'}
                             </div>
                         </div>`;
                 });
+                if(wasAtBottom) feed.scrollTop = feed.scrollHeight;
+            });
+        }
+        
+        function escapeHtml(str) {
+            if(!str) return "";
+            return str.replace(/[&<>]/g, function(m) {
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                return m;
             });
         }
 
