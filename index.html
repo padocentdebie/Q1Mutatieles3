@@ -170,11 +170,31 @@ VRAAG AAN DE DOCENT OEFENING 2 EEN KEERTJE VOOR TE DOEN!</p>
         };
 
         window.showScreen = (n) => {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(`screen-${n}`).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach((btn, i) => btn.classList.toggle('active', (i+2) === n));
-            if(n >= 3 && n <= 5) resizeCanvas(n);
-        };
+    // 1. Verberg alle schermen en toon de juiste
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const targetScreen = document.getElementById(`screen-${n}`);
+    if (targetScreen) {
+        targetScreen.classList.add('active');
+    }
+
+    // 2. Update de navigatieknoppen (veiligere methode)
+    const navButtons = document.querySelectorAll('.nav-btn');
+    navButtons.forEach((btn) => {
+        // We kijken of de 'n' in de aanroep overeenkomt met de n van de knop
+        const btnAction = btn.getAttribute('onclick');
+        if (btnAction === `showScreen(${n})`) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+
+    // 3. Resize canvas als dat nodig is
+    if(n >= 3 && n <= 5) {
+        // Kleine vertraging om te zorgen dat het scherm echt zichtbaar is
+        setTimeout(() => resizeCanvas(n), 50);
+    }
+};
 
         function setupGlobalDragEvents() {
             const onMove = (e) => {
