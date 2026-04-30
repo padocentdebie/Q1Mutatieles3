@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Q1Mutatie Les 3 - Voltooid Deelwoord & OVT</title>
+    <title>Q1Mutatie Les 3 - Oorspronkelijke Staat Hersteld</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --primary: #003082; --secondary: #f0f2f5; --accent: #d32f2f; --white: #ffffff; --success: #2e7d32; }
+        :root { --primary: #003082; --secondary: #f0f2f5; --accent: #d32f2f; --white: #ffffff; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--secondary); margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
         
         #main-nav { background: var(--primary); padding: 10px; display: none; justify-content: center; flex-wrap: wrap; gap: 8px; z-index: 2000; }
@@ -16,17 +16,16 @@
         .screen { flex-grow: 1; display: none; width: 100%; height: calc(100vh - 60px); position: relative; overflow: hidden; }
         .screen.active { display: flex; flex-direction: column; }
 
-        /* Instructie Styling Scherm 2 */
-        .instruction-card { 
-            background: var(--white); padding: 40px; border-radius: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-left: 10px solid var(--primary);
-            max-width: 800px; margin: 40px auto; line-height: 1.6;
+        /* Instructieblok Scherm 2 */
+        .instruction-container { padding: 30px; max-width: 900px; margin: 20px auto; }
+        .instruction-box { 
+            background: var(--white); padding: 30px; border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-left: 8px solid var(--primary);
         }
-        .instruction-card h2 { color: var(--primary); margin-top: 0; }
-        .step-box { background: #eef4ff; padding: 20px; border-radius: 12px; border: 1px dashed var(--primary); margin: 20px 0; }
-        .highlight { color: var(--accent); font-weight: bold; }
+        .instruction-box h1 { color: var(--primary); margin-top: 0; }
+        .step-highlight { background: #eef2f7; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #d1d9e6; }
 
-        /* Canvas & Bord */
+        /* Bord Functionaliteit */
         .drawing-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 500; pointer-events: none; }
         .drawing-canvas.active { pointer-events: auto; cursor: crosshair; }
         .drag-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
@@ -41,22 +40,15 @@
 
         .control-panel { background: var(--white); padding: 10px; display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; border-top: 1px solid #ddd; z-index: 1500; }
 
-        /* Login & Input */
+        /* Inlogscherm */
         #screen-login { display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #003082 0%, #0056b3 100%); height: 100vh; }
         .login-box { background: var(--white); padding: 30px; border-radius: 15px; text-align: center; width: 350px; }
         input[type="text"], select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
         
-        textarea#secretInput { 
-            height: 120px; 
-            background-image: url('https://i.imgur.com/8N4pG78.png'); 
-            background-size: contain; background-repeat: no-repeat; background-position: center; 
-        }
-        textarea#secretInput:focus { background-image: none; }
-
+        #secretInput { height: 100px; border: 2px solid var(--primary); background: #f9f9f9; }
+        
         iframe { width: 100%; height: 100%; border: none; }
         .pen-active-btn { background: #4caf50 !important; color: white !important; }
-        
-        .bg-img { position: absolute; width: 100%; height: 100%; object-fit: contain; z-index: 1; pointer-events: none; }
     </style>
 </head>
 <body>
@@ -66,10 +58,10 @@
         <button class="nav-btn" onclick="showScreen(3)">2. Digibord</button>
         <button class="nav-btn" onclick="showScreen(4)">3. Tekst-delen</button>
         <button class="nav-btn" onclick="showScreen(5)">4. Zinsdelen</button>
-        <button class="nav-btn" onclick="showScreen(6)">5. Oefening A</button>
-        <button class="nav-btn" onclick="showScreen(7)">6. Live Mutatie</button>
+        <button class="nav-btn" onclick="showScreen(7)">5. YouTube</button>
     </nav>
 
+    <!-- Inlogscherm -->
     <div id="screen-1" class="screen active">
         <div id="screen-login">
             <div class="login-box">
@@ -77,15 +69,11 @@
                 <input type="text" id="studentName" placeholder="Je naam...">
                 <select id="classSelect">
                     <option value="" disabled selected>Kies je klas...</option>
-                    <option value="Alpha">Alpha</option><option value="Bravo">Bravo</option>
-                    <option value="Charlie">Charlie</option><option value="Delta">Delta</option>
-                    <option value="Echo">Echo</option><option value="Foxtrot">Foxtrot</option>
-                    <option value="Golf">Golf</option><option value="Hotel">Hotel</option>
-                    <option value="India">India</option><option value="Juliet">Juliet</option>
-                    <option value="Kilo">Kilo</option><option value="Lima">Lima</option>
-                    <option value="Mike">Mike</option>
+                    <option value="Alpha">Alpha</option>
+                    <option value="Bravo">Bravo</option>
+                    <option value="Charlie">Charlie</option>
                 </select>
-                <textarea id="secretInput" placeholder=" "></textarea>
+                <textarea id="secretInput" placeholder="Typ hier je zin voor het bord..."></textarea>
                 <button onclick="sendToBoard()" style="background:#555; color:white; border:none; padding:10px; width:100%; border-radius:8px; cursor:pointer;">Zet op bord</button>
                 <button onclick="login()" style="background:var(--primary); color:white; border:none; padding:15px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:10px;">Start de les</button>
             </div>
@@ -94,22 +82,30 @@
 
     <!-- Scherm 2: Didactische Instructie -->
     <div id="screen-2" class="screen">
-        <div style="overflow-y: auto; height: 100%;">
-            <div class="instruction-card">
-                <h2><i class="fa-solid fa-pen-nib"></i> Onvoltooid Verleden Tijd</h2>
-                <p>Volg dit stappenplan voor een correcte mutatie:</p>
-                <div class="step-box">
-                    <strong>Stap 1:</strong> Zoek de <strong>persoonsvorm</strong> in de zin.<br>
-                    <strong>Stap 2:</strong> Is dat een vorm van <em>'hebben'</em>, <em>'zijn'</em>, of <em>'worden'</em>?<br>
-                    <strong>Stap 3:</strong> Zoek dan naar het tweede werkwoord in de zin. Dat is het <b>voltooid deelwoord</b>.
+        <div class="instruction-container">
+            <div class="instruction-box">
+                <h1>Instructie: Zoek de persoonsvorm</h1>
+                <p>Volg de stappen voor de juiste ontleding:</p>
+                
+                <div class="step-highlight">
+                    <strong>Stap 1:</strong> Zoek de <strong>persoonsvorm</strong> in de zin.
                 </div>
-                <p>Onthoud: een <b>voltooid deelwoord</b> is vaak te herkennen aan <span class="highlight">'ge-'</span> of <span class="highlight">'be-'</span> aan het begin.</p>
-                <p><em>In de OVT schrijven we "filmisch": we laten het voltooid deelwoord weg en gebruiken de verleden tijdsvorm!</em></p>
+
+                <p>Is dat een vorm van <strong>'hebben'</strong>, <strong>'zijn'</strong>, of <strong>'worden'</strong>?</p>
+                
+                <div class="step-highlight">
+                    <strong>Stap 2:</strong> Dan op zoek naar het tweede werkwoord in de zin. 
+                    Dat is het <strong>dikgedrukt voltooid deelwoord dikgedrukt stoppen</strong>.
+                </div>
+
+                <p>Vaak is het <strong>dik voltooid deelwoord stop dik</strong> te herkennen aan <strong>'ge-'</strong> of <strong>'be-'</strong> aan het begin.</p>
+                
+                <p><em>In de didactiek gebruiken we de term 'filmisch' alleen bij oefeningen in de OVT.</em></p>
             </div>
         </div>
     </div>
 
-    <!-- Scherm 3, 4, 5: Borden -->
+    <!-- Digibord Scherm -->
     <div id="screen-3" class="screen">
         <canvas id="canvas-3" class="drawing-canvas"></canvas>
         <div id="label-layer-3" class="drag-layer"></div>
@@ -117,47 +113,26 @@
             <button onclick="togglePen(3)" id="pen-btn-3">🖊️ Pen</button>
             <button onclick="spawnLabels(3)" style="background:var(--primary); color:white;">Spawn ASTMA</button>
             <button onclick="clearDrawings(3)">🧹 Wis Tekening</button>
-            <button onclick="clearBoard(3)" style="background:var(--accent); color:white;">🗑️ Wis Labels</button>
+            <button onclick="clearBoard(3)" style="background:var(--accent); color:white;">🗑️ Wis Alles</button>
         </div>
     </div>
 
+    <!-- Scherm 4 & 5 (PDF placeholders met bordfunctionaliteit) -->
     <div id="screen-4" class="screen">
-        <img src="https://i.imgur.com/7P1lF1U.png" class="bg-img"> <!-- Vervang door je eigen png -->
+        <div style="text-align:center; padding:20px;">PDF Tekst-delen sectie</div>
         <canvas id="canvas-4" class="drawing-canvas"></canvas>
         <div id="label-layer-4" class="drag-layer"></div>
-        <div class="control-panel">
-            <button onclick="togglePen(4)" id="pen-btn-4">🖊️ Pen</button>
-            <button onclick="spawnLabels(4)" style="background:var(--primary); color:white;">Spawn Grammatica</button>
-            <button onclick="clearDrawings(4)">Wis Tekening</button>
-            <button onclick="clearBoard(4)" style="background:var(--accent); color:white;">Wis Labels</button>
-        </div>
     </div>
 
     <div id="screen-5" class="screen">
-        <img src="https://i.imgur.com/7P1lF1U.png" class="bg-img">
+        <div style="text-align:center; padding:20px;">PDF Zinsdelen sectie</div>
         <canvas id="canvas-5" class="drawing-canvas"></canvas>
         <div id="label-layer-5" class="drag-layer"></div>
-        <div class="control-panel">
-            <button onclick="togglePen(5)" id="pen-btn-5">🖊️ Pen</button>
-            <button onclick="spawnLabels(5)" style="background:var(--primary); color:white;">Spawn Zinsdelen</button>
-            <button onclick="clearDrawings(5)">Wis Tekening</button>
-            <button onclick="clearBoard(5)" style="background:var(--accent); color:white;">Wis Labels</button>
-        </div>
     </div>
 
-    <div id="screen-6" class="screen"><iframe src="https://learningapps.org/watch?v=psf63phtk25"></iframe></div>
-
-    <!-- Scherm 7: YouTube casus integratie -->
+    <!-- Scherm 7: YouTube -->
     <div id="screen-7" class="screen">
-        <div style="display: flex; flex-direction: column; height: 100%;">
-            <div style="height: 50%; background: #000;">
-                <iframe src="https://www.youtube.com/embed/z8E_f_GIs2c" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-            </div>
-            <div style="height: 50%; padding: 20px; overflow-y: auto; background: var(--white);">
-                <h3>Live Mutatie Feed</h3>
-                <div id="liveFeed"></div>
-            </div>
-        </div>
+        <iframe src="https://www.youtube.com/embed/z8E_f_GIs2c" allowfullscreen></iframe>
     </div>
 
     <script type="module">
@@ -184,7 +159,7 @@
         window.login = () => {
             const klas = document.getElementById('classSelect').value;
             if(!klas) return alert("Kies een klas!");
-            window.currentClass = klas + "_L3";
+            window.currentClass = klas;
             document.getElementById('main-nav').style.display = 'flex';
             window.showScreen(2);
             setupSync();
@@ -229,15 +204,13 @@
                 e.stopPropagation();
                 remove(ref(db, `classes/${window.currentClass}/labels/s${sid}/${lid}`));
             };
-            const startDrag = (e) => {
+            el.addEventListener('mousedown', (e) => {
                 if (isPenActive) return;
                 draggingElement = el; dragSid = sid; dragLid = lid;
                 const rect = el.getBoundingClientRect();
-                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-                dragOffset.x = clientX - rect.left; dragOffset.y = clientY - rect.top;
-            };
-            el.addEventListener('mousedown', startDrag); el.addEventListener('touchstart', startDrag);
+                dragOffset.x = (e.clientX || e.touches[0].clientX) - rect.left;
+                dragOffset.y = (e.clientY || e.touches[0].clientY) - rect.top;
+            });
             document.getElementById(`label-layer-${sid}`).appendChild(el);
         }
 
@@ -245,35 +218,28 @@
             [3, 4, 5].forEach(id => {
                 const canvas = document.getElementById(`canvas-${id}`);
                 const ctx = canvas.getContext('2d');
-                const draw = (e) => {
+                canvas.onmousedown = canvas.ontouchstart = (e) => { if(isPenActive) { drawing = true; ctx.beginPath(); }};
+                canvas.onmousemove = canvas.ontouchmove = (e) => {
                     if(!drawing || !isPenActive) return;
                     const rect = canvas.getBoundingClientRect();
-                    const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
-                    const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
-                    ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y);
+                    ctx.lineTo((e.clientX || e.touches[0].clientX) - rect.left, (e.clientY || e.touches[0].clientY) - rect.top);
+                    ctx.stroke();
                 };
-                canvas.onmousedown = canvas.ontouchstart = (e) => { 
-                    if(isPenActive) { 
-                        drawing = true; 
-                        ctx.lineWidth = 3; ctx.strokeStyle = '#d32f2f'; ctx.lineCap = 'round';
-                        draw(e); 
-                    }
-                };
-                canvas.onmousemove = canvas.ontouchmove = draw;
-                window.onmouseup = window.ontouchend = () => { 
-                    if(drawing) { 
-                        drawing = false; ctx.beginPath(); 
-                        set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL());
-                    }
-                };
+                window.onmouseup = window.ontouchend = () => { if(drawing) { drawing = false; set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL()); }};
             });
         }
 
         window.togglePen = (id) => {
             isPenActive = !isPenActive;
-            document.querySelectorAll('.control-panel button').forEach(b => b.classList.remove('pen-active-btn'));
-            if(isPenActive) document.getElementById(`pen-btn-${id}`).classList.add('pen-active-btn');
+            document.getElementById(`pen-btn-${id}`).classList.toggle('pen-active-btn', isPenActive);
             document.getElementById(`canvas-${id}`).classList.toggle('active', isPenActive);
+        };
+
+        window.sendToBoard = () => {
+            const secret = document.getElementById('secretInput').value;
+            if(!window.currentClass || !secret.trim()) return;
+            push(ref(db, `classes/${window.currentClass}/labels/s3`), { text: secret, x: 150, y: 150 });
+            document.getElementById('secretInput').value = "";
         };
 
         function setupSync() {
@@ -286,43 +252,19 @@
                         if (!el) createHTMLLabel(id, lid, data[lid]);
                         else if (dragLid !== lid) { el.style.left = data[lid].x + 'px'; el.style.top = data[lid].y + 'px'; }
                     });
-                    container.querySelectorAll('.draggable-label').forEach(el => {
-                        if (!data[el.id.replace('label-', '')]) el.remove();
-                    });
-                });
-                onValue(ref(db, `classes/${window.currentClass}/drawings/s${id}`), (snap) => {
-                    if(drawing) return;
-                    const canvas = document.getElementById(`canvas-${id}`);
-                    const ctx = canvas.getContext('2d');
-                    const img = new Image();
-                    img.onload = () => { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img, 0, 0); };
-                    if(snap.val()) img.src = snap.val();
-                    else ctx.clearRect(0,0,canvas.width,canvas.height);
                 });
             });
         }
-
-        window.spawnLabels = (id) => {
-            const sets = {
-                3: ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"],
-                4: ["Hulpwerkwoord", "Voltooid Deelwoord", "Persoonsvorm", "Verleden Tijd"],
-                5: ["Persoonsvorm", "Onderwerp", "Gezegde", "Lijdend voorwerp", "OVT"]
-            };
-            sets[id].forEach((t, i) => push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text: t, x: 50, y: 80 + (i*60) }));
-        };
-
-        window.sendToBoard = () => {
-            const secret = document.getElementById('secretInput').value;
-            if(!window.currentClass || !secret.trim()) return;
-            push(ref(db, `classes/${window.currentClass}/labels/s3`), { text: secret, x: 150, y: 150 });
-            document.getElementById('secretInput').value = "";
-            alert("Tekst naar bord gestuurd!");
-        };
 
         function resizeCanvas(id) {
             const canvas = document.getElementById(`canvas-${id}`);
             canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
         }
+
+        window.spawnLabels = (id) => {
+            const sets = { 3: ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"] };
+            sets[id].forEach((t, i) => push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text: t, x: 50, y: 80 + (i*60) }));
+        };
 
         window.clearDrawings = (id) => {
             const canvas = document.getElementById(`canvas-${id}`);
