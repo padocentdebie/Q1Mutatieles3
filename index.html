@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Q1Mutatie Les 3</title>
+    <title>Q1Mutatie Les 3 - Voltooid Deelwoord & OVT</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root { --primary: #003082; --secondary: #f0f2f5; --accent: #d32f2f; --white: #ffffff; }
+        :root { --primary: #003082; --secondary: #f0f2f5; --accent: #d32f2f; --white: #ffffff; --gold: #ffc107; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--secondary); margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
         
         #main-nav { background: var(--primary); padding: 10px; display: none; justify-content: center; flex-wrap: wrap; gap: 8px; z-index: 2000; }
@@ -16,7 +16,16 @@
         .screen { flex-grow: 1; display: none; width: 100%; height: calc(100vh - 60px); position: relative; overflow: hidden; }
         .screen.active { display: flex; flex-direction: column; }
 
-        .bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1; pointer-events: none; }
+        /* Instructieblok Stijl */
+        .instruction-card { 
+            background: var(--white); padding: 40px; border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-left: 10px solid var(--primary);
+            max-width: 800px; margin: 40px auto;
+        }
+        .instruction-card h2 { color: var(--primary); margin-top: 0; border-bottom: 2px solid var(--secondary); padding-bottom: 10px; }
+        .highlight-box { background: #eef4ff; padding: 20px; border-radius: 12px; border: 1px dashed var(--primary); margin: 20px 0; }
+        .ovt-term { color: var(--accent); font-weight: bold; font-size: 1.2em; border: 2px solid var(--accent); padding: 2px 8px; border-radius: 4px; }
+
         .drawing-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 500; pointer-events: none; }
         .drawing-canvas.active { pointer-events: auto; cursor: crosshair; }
         .drag-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
@@ -29,63 +38,74 @@
         }
         .delete-icon { color: var(--accent); cursor: pointer; font-size: 1.1em; }
 
-        .content-container { padding: 30px; max-width: 900px; margin: 20px auto; background: var(--white); border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow-y: auto; }
         .control-panel { background: var(--white); padding: 10px; display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; border-top: 1px solid #ddd; z-index: 1500; }
 
-        #screen-login { display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #003082 0%, #0056b3 100%); height: 100vh; width: 100%; }
-        .login-box { background: var(--white); padding: 30px; border-radius: 15px; text-align: center; width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        #screen-login { display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #003082 0%, #0056b3 100%); height: 100vh; }
+        .login-box { background: var(--white); padding: 30px; border-radius: 15px; text-align: center; width: 350px; }
         input[type="text"], select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
         
-        iframe { width: 100%; height: 100%; border: none; }
+        iframe, embed { width: 100%; height: 100%; border: none; }
         .pen-active-btn { background: #4caf50 !important; color: white !important; }
     </style>
 </head>
 <body>
 
     <nav id="main-nav">
-        <button class="nav-btn active" onclick="showScreen(2)">1. Uitleg Les 3</button>
+        <button class="nav-btn active" onclick="showScreen(2)">1. Uitleg</button>
         <button class="nav-btn" onclick="showScreen(3)">2. Digibord</button>
-        <button class="nav-btn" onclick="showScreen(4)">3. Afbeelding Oefening 1</button>
-        <button class="nav-btn" onclick="showScreen(5)">4. Afbeelding Oefening 2</button>
+        <button class="nav-btn" onclick="showScreen(4)">3. PDF Tekst-delen</button>
+        <button class="nav-btn" onclick="showScreen(5)">4. PDF Zinsdelen</button>
         <button class="nav-btn" onclick="showScreen(6)">5. Oefening A</button>
+        <button class="nav-btn" onclick="showScreen(7)">6. Oefening B</button>
     </nav>
 
+    <!-- Inlogscherm -->
     <div id="screen-1" class="screen active">
         <div id="screen-login">
             <div class="login-box">
-                <h2 style="color: var(--primary);">Welkom bij Mutatie les 3</h2>
+                <h2 style="color: var(--primary);">Welkom bij de les</h2>
                 <input type="text" id="studentName" placeholder="Je naam...">
                 <select id="classSelect">
                     <option value="" disabled selected>Kies je klas...</option>
                     <option value="Alpha">Alpha</option><option value="Bravo">Bravo</option>
                     <option value="Charlie">Charlie</option><option value="Delta">Delta</option>
                     <option value="Echo">Echo</option><option value="Foxtrot">Foxtrot</option>
-                    <option value="Golf">Golf</option><option value="Hotel">Hotel</option>
-                    <option value="India">India</option><option value="Juliet">Juliet</option>
-                    <option value="Kilo">Kilo</option><option value="Lima">Lima</option>
-                    <option value="Mike">Mike</option>
                 </select>
-                <textarea id="secretInput" placeholder="Typ hier je zin voor het bord..."></textarea>
-                <button onclick="sendToBoard()" style="background:#555; color:white; border:none; padding:10px; width:100%; border-radius:8px; cursor:pointer; margin-bottom: 5px;">Zet op bord</button>
-                <button onclick="login()" style="background:var(--primary); color:white; border:none; padding:15px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer;">Start Les 3</button>
+                <textarea id="secretInput" placeholder="Typ hier je zin..."></textarea>
+                <button onclick="sendToBoard()" style="background:#555; color:white; border:none; padding:10px; width:100%; border-radius:8px; cursor:pointer;">Zet op bord</button>
+                <button onclick="login()" style="background:var(--primary); color:white; border:none; padding:15px; width:100%; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:10px;">Start de les</button>
                 <button onclick="resetInputs()" style="background:none; border:none; color:#888; text-decoration:underline; cursor:pointer; margin-top:15px;">Reset invoer</button>
             </div>
         </div>
     </div>
 
+    <!-- Scherm 2: Fraai vormgegeven Instructie -->
     <div id="screen-2" class="screen">
-        <div class="content-container">
-            <h1>Onderwerp van Les 3</h1>
-            <p><strong>Doel: Herken het voltooid deelwoord</strong></p>
-            <ul>
-                <li>Het is een werkwoord</li>
-                <li>Het is géén persoonsvorm</li>
-                <li>De persoonsvorm is een vorm van <em>zijn</em>, <em>hebben</em> of <em>worden</em>.</li>
-            </ul>
-            <p>VRAAG AAN DE DOCENT OEFENING 2 EEN KEERTJE VOOR TE DOEN!</p>
+        <div style="overflow-y: auto; height: 100%;">
+            <div class="instruction-card">
+                <h2>Instructie: Het Voltooid Deelwoord</h2>
+                <p>Volg dit stappenplan om de zin te ontleden:</p>
+                
+                <div class="highlight-box">
+                    <strong>Stap 1:</strong> Zoek de persoonsvorm (pv) in de zin.<br>
+                    <strong>Stap 2:</strong> Is de persoonsvorm een vorm van <em>'hebben'</em>, <em>'zijn'</em> of <em>'worden'</em>?<br>
+                    <strong>Stap 3:</strong> Zoek dan naar het tweede werkwoord. Dat is het <b>voltooid deelwoord</b>.
+                </div>
+
+                <p>Je kunt een <b>voltooid deelwoord</b> vaak herkennen aan de voorvoegsels <strong>'ge-'</strong> of <strong>'be-'</strong> aan het begin.</p>
+                
+                <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
+                
+                <h3>Onvoltooid Verleden Tijd (OVT)</h3>
+                <p>Wanneer we een oefening doen in de <strong>OVT</strong>, noemen we de schrijfstijl ook wel:</p>
+                <div style="text-align: center; margin: 20px 0;">
+                    <span class="ovt-term">filmisch</span>
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Digibord -->
     <div id="screen-3" class="screen">
         <canvas id="canvas-3" class="drawing-canvas"></canvas>
         <div id="label-layer-3" class="drag-layer"></div>
@@ -97,20 +117,21 @@
         </div>
     </div>
 
+    <!-- PDF Schermen -->
     <div id="screen-4" class="screen">
-        <img src="Q3lesmaterialQ1les3.png" class="bg-image" alt="Lesmateriaal 1">
+        <embed src="lesmateriaal_tekst.pdf" type="application/pdf">
         <canvas id="canvas-4" class="drawing-canvas"></canvas>
         <div id="label-layer-4" class="drag-layer"></div>
         <div class="control-panel">
             <button onclick="togglePen(4)" id="pen-btn-4">🖊️ Pen</button>
-            <button onclick="spawnLabels(4)" style="background:var(--primary); color:white;">Spawn Tekst-delen</button>
+            <button onclick="spawnLabels(4)" style="background:var(--primary); color:white;">Spawn Grammatica</button>
             <button onclick="clearDrawings(4)">Wis Tekening</button>
             <button onclick="clearBoard(4)" style="background:var(--accent); color:white;">Wis Labels</button>
         </div>
     </div>
 
     <div id="screen-5" class="screen">
-        <img src="Q3lesmaterialQ1les3.png" class="bg-image" alt="Lesmateriaal 2">
+        <embed src="lesmateriaal_zinnen.pdf" type="application/pdf">
         <canvas id="canvas-5" class="drawing-canvas"></canvas>
         <div id="label-layer-5" class="drag-layer"></div>
         <div class="control-panel">
@@ -121,232 +142,180 @@
         </div>
     </div>
 
-    <div id="screen-6" class="screen"><iframe src="https://learningapps.org/watch?v=pbsnzhgyn24"></iframe></div>
+    <div id="screen-6" class="screen"><iframe src="https://learningapps.org/watch?v=p696ntbi323"></iframe></div>
+    <div id="screen-7" class="screen"><iframe src="https://learningapps.org/watch?v=p37h8xcpa24"></iframe></div>
 
     <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, onValue, push, remove, update, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.app";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, remove, update, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
-        authDomain: "aangifteq2les1.firebaseapp.com",
-        databaseURL: "https://aangifteq2les1-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "aangifteq2les1",
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    // Variabelen die we nodig hebben voor de interactie
-    window.currentClass = "";
-    let isPenActive = false;
-    let drawing = false;
-    let draggingElement = null;
-    let dragSid = null;
-    let dragLid = null;
-    let dragOffset = { x: 0, y: 0 };
-
-    // --- DE GEFIXTE LOGIN FUNCTIE ---
-    window.login = () => {
-        const classDropdown = document.getElementById('classSelect');
-        const studentName = document.getElementById('studentName').value.trim();
-        const klas = classDropdown.value;
-
-        // Validatie
-        if (!klas) {
-            alert("Selecteer eerst je klas!");
-            return;
-        }
-
-        // Klas instellen (bijv. "Alpha-L3")
-        window.currentClass = klas + "-L3"; 
-
-        // Direct naar de uitleg navigeren
-        document.getElementById('main-nav').style.display = 'flex';
-        window.showScreen(2);
-
-        // Firebase op de achtergrond initialiseren
-        setupSync();
-        setupDrawing();
-        setupGlobalDragEvents();
-
-        console.log(`Ingelogd als ${studentName || 'Anoniem'} in klas ${window.currentClass}`);
-    };
-
-    // --- NAVIGATIE ---
-    window.showScreen = (n) => {
-        // Verberg alle schermen
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        
-        // Toon het gekozen scherm
-        const targetScreen = document.getElementById(`screen-${n}`);
-        if (targetScreen) {
-            targetScreen.classList.add('active');
-        }
-
-        // Update de knoppen in de navigatiebalk
-        document.querySelectorAll('.nav-btn').forEach((btn, index) => {
-            // Check of de knop correspondeert met het schermnummer
-            // In jouw HTML is de eerste knop n=2, de tweede n=3, etc.
-            const screenNum = index + 2; 
-            btn.classList.toggle('active', screenNum === n);
-        });
-
-        // Resize canvas als we naar een tekenscherm gaan
-        if(n >= 3 && n <= 5) {
-            setTimeout(() => resizeCanvas(n), 100);
-        }
-    };
-
-    // --- DE REST VAN DE LOGICA (Sync, Drag, Draw) ---
-    // Zorg dat deze functies binnen de module blijven of aan window hangen waar nodig
-
-    function setupGlobalDragEvents() {
-        const onMove = (e) => {
-            if (!draggingElement) return;
-            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-            draggingElement.style.left = (clientX - dragOffset.x) + 'px';
-            draggingElement.style.top = (clientY - dragOffset.y) + 'px';
-        };
-        const onEnd = () => {
-            if (!draggingElement) return;
-            update(ref(db, `classes/${window.currentClass}/labels/s${dragSid}/${dragLid}`), { 
-                x: parseInt(draggingElement.style.left), 
-                y: parseInt(draggingElement.style.top) 
-            });
-            draggingElement = null;
-        };
-        window.addEventListener('mousemove', onMove); window.addEventListener('touchmove', onMove);
-        window.addEventListener('mouseup', onEnd); window.addEventListener('touchend', onEnd);
-    }
-
-    function createHTMLLabel(sid, lid, obj) {
-        const el = document.createElement('div');
-        el.className = 'draggable-label';
-        el.id = `label-${lid}`;
-        el.style.left = obj.x + 'px'; el.style.top = obj.y + 'px';
-        el.innerHTML = `<span>${obj.text}</span><i class="fa-solid fa-circle-xmark delete-icon"></i>`;
-        
-        el.querySelector('.delete-icon').onclick = (e) => {
-            e.stopPropagation();
-            remove(ref(db, `classes/${window.currentClass}/labels/s${sid}/${lid}`));
+        const firebaseConfig = {
+            apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
+            authDomain: "aangifteq2les1.firebaseapp.com",
+            databaseURL: "https://aangifteq2les1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "aangifteq2les1",
         };
 
-        const startDrag = (e) => {
-            if (isPenActive) return;
-            draggingElement = el; dragSid = sid; dragLid = lid;
-            const rect = el.getBoundingClientRect();
-            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-            dragOffset.x = clientX - rect.left; dragOffset.y = clientY - rect.top;
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        window.currentClass = "";
+        let isPenActive = false;
+        let drawing = false;
+        let draggingElement = null;
+        let dragSid = null;
+        let dragLid = null;
+        let dragOffset = { x: 0, y: 0 };
+
+        window.login = () => {
+            const klas = document.getElementById('classSelect').value;
+            if(!klas) return alert("Kies een klas!");
+            window.currentClass = klas + "-L3";
+            document.getElementById('main-nav').style.display = 'flex';
+            window.showScreen(2);
+            setupSync();
+            setupDrawing();
+            setupGlobalDragEvents();
         };
 
-        el.addEventListener('mousedown', startDrag); el.addEventListener('touchstart', startDrag);
-        document.getElementById(`label-layer-${sid}`).appendChild(el);
-    }
+        window.showScreen = (n) => {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(`screen-${n}`).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach((btn, i) => btn.classList.toggle('active', (i+2) === n));
+            if(n >= 3 && n <= 5) setTimeout(() => resizeCanvas(n), 100);
+        };
 
-    function setupDrawing() {
-        [3, 4, 5].forEach(id => {
-            const canvas = document.getElementById(`canvas-${id}`);
-            const ctx = canvas.getContext('2d');
-            const draw = (e) => {
-                if(!drawing || !isPenActive) return;
-                ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#d32f2f';
-                const rect = canvas.getBoundingClientRect();
-                const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
-                const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
-                ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y);
+        function setupGlobalDragEvents() {
+            const onMove = (e) => {
+                if (!draggingElement) return;
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                draggingElement.style.left = (clientX - dragOffset.x) + 'px';
+                draggingElement.style.top = (clientY - dragOffset.y) + 'px';
             };
-            canvas.onmousedown = canvas.ontouchstart = (e) => { if(isPenActive) { drawing = true; draw(e); }};
-            canvas.onmousemove = canvas.ontouchmove = draw;
-            window.onmouseup = window.ontouchend = () => { if(drawing) { drawing = false; ctx.beginPath(); saveDrawing(id, canvas); }};
-        });
-    }
-
-    window.togglePen = (id) => {
-        isPenActive = !isPenActive;
-        document.querySelectorAll('.control-panel button').forEach(b => b.classList.remove('pen-active-btn'));
-        if(isPenActive) document.getElementById(`pen-btn-${id}`).classList.add('pen-active-btn');
-        document.getElementById(`canvas-${id}`).classList.toggle('active', isPenActive);
-    };
-
-    function saveDrawing(id, canvas) {
-        set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL());
-    }
-
-    window.clearDrawings = (id) => {
-        const canvas = document.getElementById(`canvas-${id}`);
-        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-        remove(ref(db, `classes/${window.currentClass}/drawings/s${id}`));
-    };
-
-    window.clearBoard = (id) => remove(ref(db, `classes/${window.currentClass}/labels/s${id}`));
-
-    function setupSync() {
-        [3, 4, 5].forEach(id => {
-            onValue(ref(db, `classes/${window.currentClass}/labels/s${id}`), (snap) => {
-                const data = snap.val() || {};
-                const layer = document.getElementById(`label-layer-${id}`);
-                
-                Object.keys(data).forEach(lid => {
-                    let el = document.getElementById(`label-${lid}`);
-                    if (!el) createHTMLLabel(id, lid, data[lid]);
-                    else if (draggingElement !== el) { 
-                        el.style.left = data[lid].x + 'px'; 
-                        el.style.top = data[lid].y + 'px'; 
-                    }
+            const onEnd = () => {
+                if (!draggingElement) return;
+                update(ref(db, `classes/${window.currentClass}/labels/s${dragSid}/${dragLid}`), { 
+                    x: parseInt(draggingElement.style.left), 
+                    y: parseInt(draggingElement.style.top) 
                 });
-                
-                layer.querySelectorAll('.draggable-label').forEach(el => {
-                    if (!data[el.id.replace('label-', '')]) el.remove();
-                });
-            });
-            
-            onValue(ref(db, `classes/${window.currentClass}/drawings/s${id}`), (snap) => {
-                if(drawing) return;
-                const canvas = document.getElementById(`canvas-${id}`);
-                const img = new Image();
-                img.onload = () => {
-                    canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
-                    canvas.getContext('2d').drawImage(img, 0, 0);
-                };
-                if(snap.val()) img.src = snap.val();
-                else canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
-            });
-        });
-    }
-
-    window.spawnLabels = (id) => {
-        const sets = {
-            3: ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"],
-            4: ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"],
-            5: ["Persoonsvorm", "Onderwerp", "Gezegde", "Lijdend voorwerp", "Meewerkend voorwerp", "Bijwoordelijke bepaling"]
-        };
-        sets[id].forEach((t, i) => push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text: t, x: 50, y: 80 + (i*60) }));
-    };
-
-    window.sendToBoard = () => {
-        const secret = document.getElementById('secretInput').value;
-        const klas = document.getElementById('classSelect').value;
-        if(!klas || !secret.trim()) return alert("Kies een klas en typ tekst!");
-        const targetClass = klas + "-L3";
-        push(ref(db, `classes/${targetClass}/labels/s3`), { text: secret, x: 150, y: 150 });
-        document.getElementById('secretInput').value = "";
-    };
-
-    function resizeCanvas(id) {
-        const canvas = document.getElementById(`canvas-${id}`);
-        if(canvas) { 
-            canvas.width = canvas.offsetWidth; 
-            canvas.height = canvas.offsetHeight; 
+                draggingElement = null;
+            };
+            window.addEventListener('mousemove', onMove); window.addEventListener('touchmove', onMove);
+            window.addEventListener('mouseup', onEnd); window.addEventListener('touchend', onEnd);
         }
-    }
 
-    window.resetInputs = () => {
-        document.getElementById('studentName').value = "";
-        document.getElementById('classSelect').selectedIndex = 0;
-        document.getElementById('secretInput').value = "";
-    };
-</script></body>
+        function createHTMLLabel(sid, lid, obj) {
+            const el = document.createElement('div');
+            el.className = 'draggable-label';
+            el.id = `label-${lid}`;
+            el.style.left = obj.x + 'px'; el.style.top = obj.y + 'px';
+            el.innerHTML = `<span>${obj.text}</span><i class="fa-solid fa-circle-xmark delete-icon"></i>`;
+            el.querySelector('.delete-icon').onclick = (e) => {
+                e.stopPropagation();
+                remove(ref(db, `classes/${window.currentClass}/labels/s${sid}/${lid}`));
+            };
+            const startDrag = (e) => {
+                if (isPenActive) return;
+                draggingElement = el; dragSid = sid; dragLid = lid;
+                const rect = el.getBoundingClientRect();
+                const cx = e.clientX || (e.touches && e.touches[0].clientX);
+                const cy = e.clientY || (e.touches && e.touches[0].clientY);
+                dragOffset.x = cx - rect.left; dragOffset.y = cy - rect.top;
+            };
+            el.addEventListener('mousedown', startDrag); el.addEventListener('touchstart', startDrag);
+            document.getElementById(`label-layer-${sid}`).appendChild(el);
+        }
+
+        function setupDrawing() {
+            [3, 4, 5].forEach(id => {
+                const canvas = document.getElementById(`canvas-${id}`);
+                const ctx = canvas.getContext('2d');
+                const draw = (e) => {
+                    if(!drawing || !isPenActive) return;
+                    ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#d32f2f';
+                    const rect = canvas.getBoundingClientRect();
+                    const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                    const y = (e.clientY || e.touches[0].clientY) - rect.top;
+                    ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y);
+                };
+                canvas.onmousedown = canvas.ontouchstart = (e) => { if(isPenActive) { drawing = true; draw(e); }};
+                canvas.onmousemove = canvas.ontouchmove = draw;
+                window.onmouseup = window.ontouchend = () => { if(drawing) { drawing = false; ctx.beginPath(); saveDrawing(id, canvas); }};
+            });
+        }
+
+        window.togglePen = (id) => {
+            isPenActive = !isPenActive;
+            document.querySelectorAll('.control-panel button').forEach(b => b.classList.remove('pen-active-btn'));
+            if(isPenActive) document.getElementById(`pen-btn-${id}`).classList.add('pen-active-btn');
+            document.getElementById(`canvas-${id}`).classList.toggle('active', isPenActive);
+        };
+
+        function saveDrawing(id, canvas) {
+            set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL());
+        }
+
+        window.clearDrawings = (id) => {
+            const canvas = document.getElementById(`canvas-${id}`);
+            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            remove(ref(db, `classes/${window.currentClass}/drawings/s${id}`));
+        };
+
+        window.clearBoard = (id) => remove(ref(db, `classes/${window.currentClass}/labels/s${id}`));
+
+        function setupSync() {
+            [3, 4, 5].forEach(id => {
+                onValue(ref(db, `classes/${window.currentClass}/labels/s${id}`), (snap) => {
+                    const data = snap.val() || {};
+                    const layer = document.getElementById(`label-layer-${id}`);
+                    Object.keys(data).forEach(lid => {
+                        let el = document.getElementById(`label-${lid}`);
+                        if (!el) createHTMLLabel(id, lid, data[lid]);
+                        else if (draggingElement !== el) { el.style.left = data[lid].x + 'px'; el.style.top = data[lid].y + 'px'; }
+                    });
+                    layer.querySelectorAll('.draggable-label').forEach(el => {
+                        if (!data[el.id.replace('label-', '')]) el.remove();
+                    });
+                });
+                onValue(ref(db, `classes/${window.currentClass}/drawings/s${id}`), (snap) => {
+                    if(drawing) return;
+                    const canvas = document.getElementById(`canvas-${id}`);
+                    const img = new Image();
+                    img.onload = () => {
+                        canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+                        canvas.getContext('2d').drawImage(img, 0, 0);
+                    };
+                    if(snap.val()) img.src = snap.val();
+                });
+            });
+        }
+
+        window.spawnLabels = (id) => {
+            const sets = {
+                3: ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"],
+                4: ["Hulpwerkwoord", "Voltooid Deelwoord", "Persoonsvorm", "Filmisch schrijven"],
+                5: ["Persoonsvorm", "Onderwerp", "Gezegde", "Lijdend voorwerp", "OVT"]
+            };
+            sets[id].forEach((t, i) => push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text: t, x: 50, y: 80 + (i*60) }));
+        };
+
+        window.sendToBoard = () => {
+            const secret = document.getElementById('secretInput').value;
+            if(!window.currentClass || !secret.trim()) return;
+            push(ref(db, `classes/${window.currentClass}/labels/s3`), { text: secret, x: 150, y: 150 });
+            document.getElementById('secretInput').value = "";
+        };
+
+        function resizeCanvas(id) {
+            const canvas = document.getElementById(`canvas-${id}`);
+            canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+        }
+
+        window.resetInputs = () => {
+            document.getElementById('studentName').value = "";
+            document.getElementById('classSelect').selectedIndex = 0;
+            document.getElementById('secretInput').value = "";
+        };
+    </script>
+</body>
 </html>
