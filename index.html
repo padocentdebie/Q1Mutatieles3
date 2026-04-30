@@ -8,49 +8,49 @@
     <style>
         * { box-sizing: border-box; user-select: none; touch-action: pan-y; }
         :root { 
-            --primary: #1c2b4b; 
-            --secondary: #f4f7f9; 
-            --accent: #d4af37; 
-            --white: #ffffff; 
-            --text: #2c3e50;
+            --primary: #1c2b4b; --secondary: #f4f7f9; --accent: #d4af37; 
+            --white: #ffffff; --text: #2c3e50; --danger: #e74c3c;
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--secondary); margin: 0; height: 100vh; display: flex; flex-direction: column; color: var(--text); }
         
-        #main-nav { background: var(--primary); padding: 10px; display: none; justify-content: center; gap: 10px; z-index: 2000; border-bottom: 3px solid var(--accent); }
-        .nav-btn { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(212,175,55,0.3); padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        #main-nav { background: var(--primary); padding: 10px; display: none; justify-content: center; gap: 8px; z-index: 2000; border-bottom: 3px solid var(--accent); flex-wrap: wrap; }
+        .nav-btn { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(212,175,55,0.3); padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
         .nav-btn.active { background: var(--accent); color: var(--primary); }
 
         .screen { flex-grow: 1; display: none; width: 100%; height: calc(100vh - 65px); position: relative; overflow: hidden; }
         .screen.active { display: flex; flex-direction: column; }
 
-        /* Canvas & Tekenen */
+        /* Digibord Styles */
+        .board-container { position: relative; flex: 1; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #fff; }
         .drawing-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 500; pointer-events: none; }
         .drawing-canvas.active { pointer-events: auto; cursor: crosshair; }
-        .pen-active-btn { background: var(--danger, #e74c3c) !important; color: white !important; }
-
-        /* Login */
-        #screen-login { display: flex; justify-content: center; align-items: center; background: var(--primary); height: 100vh; }
-        .login-box { background: var(--white); padding: 40px; border-radius: 12px; text-align: center; width: 90%; max-width: 420px; border-bottom: 8px solid var(--accent); }
-        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
-
-        /* Video Scherm Styling */
-        .video-assignment { background: #1c2b4b; color: white; padding: 15px; border-bottom: 3px solid var(--accent); }
-        .live-feed-container { background: #fff; margin: 10px; border-radius: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .feed-messages { flex: 1; overflow-y: auto; padding: 15px; background: #fafafa; border-bottom: 1px solid #eee; }
-        .message-item { background: #fff; border-left: 4px solid var(--primary); padding: 10px; margin-bottom: 8px; border-radius: 4px; }
-        .message-author { font-weight: bold; font-size: 0.8rem; color: var(--accent); }
-        
-        .feedback-input-area { padding: 15px; background: #fff; display: flex; gap: 10px; }
         .drag-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
-        .draggable-label { position: absolute; background: #fff; border: 1.5px solid var(--primary); padding: 10px 16px; border-radius: 4px; cursor: grab; font-weight: bold; pointer-events: auto; box-shadow: 4px 4px 0px var(--accent); }
+        .draggable-label { position: absolute; background: #fff; border: 1.5px solid var(--primary); padding: 8px 12px; border-radius: 4px; cursor: grab; font-weight: bold; pointer-events: auto; box-shadow: 3px 3px 0px var(--accent); white-space: nowrap; z-index: 1001; }
+
+        .control-panel { position: absolute; bottom: 0; width: 100%; display: flex; justify-content: center; padding: 10px; background: rgba(255,255,255,0.95); gap: 10px; z-index: 1100; border-top: 2px solid var(--primary); }
+        .btn-tool { padding: 10px 18px; border-radius: 6px; border: 1px solid var(--primary); cursor: pointer; font-weight: bold; background: white; color: var(--primary); }
+        .btn-tool.active { background: var(--danger); color: white; }
+
+        /* Video & Feed */
+        .video-assignment { background: var(--primary); color: white; padding: 15px; border-bottom: 3px solid var(--accent); }
+        .live-feed-container { background: #fff; margin: 10px; border-radius: 8px; display: flex; flex-direction: column; flex: 1; min-height: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .feed-messages { flex: 1; overflow-y: auto; padding: 15px; background: #f9f9f9; }
+        .message-item { background: #fff; border-left: 4px solid var(--primary); padding: 10px; margin-bottom: 8px; border-radius: 4px; }
+        
+        #screen-login { display: flex; justify-content: center; align-items: center; background: var(--primary); height: 100vh; }
+        .login-box { background: var(--white); padding: 40px; border-radius: 12px; text-align: center; width: 90%; max-width: 400px; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; }
     </style>
 </head>
 <body>
 
 <nav id="main-nav">
-    <button class="nav-btn active" data-screen="2">Instructie</button>
-    <button class="nav-btn" data-screen="3">Digibord</button>
-    <button class="nav-btn" data-screen="7">Mutatie Video</button>
+    <button class="nav-btn active" data-screen="2">Intro</button>
+    <button class="nav-btn" data-screen="3">Bord 1</button>
+    <button class="nav-btn" data-screen="4">Bord 2</button>
+    <button class="nav-btn" data-screen="5">Q3 ASTMA</button>
+    <button class="nav-btn" data-screen="6">PV & VD Analyse</button>
+    <button class="nav-btn" data-screen="7">Video Mutatie</button>
 </nav>
 
 <!-- Scherm 1: Login -->
@@ -63,61 +63,79 @@
                 <option value="" disabled selected>Kies een eenheid</option>
                 <option value="Alpha">Alpha</option><option value="Bravo">Bravo</option><option value="Charlie">Charlie</option>
                 <option value="Delta">Delta</option><option value="Echo">Echo</option><option value="Foxtrot">Foxtrot</option>
+                <option value="Golf">Golf</option><option value="Hotel">Hotel</option><option value="Juliet">Juliet</option>
+                <option value="Kilo">Kilo</option><option value="Lima">Lima</option><option value="Mike">Mike</option>
             </select>
-            <textarea id="secretInput" placeholder="Zin voor het digibord..."></textarea>
-            <button id="sendPreBtn" style="cursor:pointer;">📌 Zet op bord</button>
-            <button id="loginBtn" style="background:var(--primary); color:var(--accent); font-weight:bold; margin-top:10px; cursor:pointer; width:100%; border:none; padding:15px; border-radius:8px;">START TRAINING</button>
+            <textarea id="secretInput" placeholder="Tekst voor digibord..."></textarea>
+            <button id="loginBtn" style="width:100%; background:var(--primary); color:var(--accent); font-weight:bold; cursor:pointer; padding:15px; border:none; border-radius:8px;">START TRAINING</button>
         </div>
     </div>
 </div>
 
-<!-- Scherm 2: Instructie -->
+<!-- Scherm 2: Intro -->
 <div id="screen-2" class="screen">
-    <div style="padding:20px;">
-        <div style="background:white; padding:30px; border-radius:12px; border-top:6px solid var(--accent);">
-            <h1><i class="fa-solid fa-shield-halved"></i> Methodiek</h1>
-            <p><strong>Het Voltooid Deelwoord:</strong> Identificeer de persoonsvorm. Is het <em>hebben, zijn of worden</em>? Dan staat de actieve handeling als voltooid deelwoord achterin de zin.</p>
-            <p><strong>Filmisch schrijven:</strong> Gebruik de <strong>onvoltooid verleden tijd (OVT)</strong> voor een actieve, beeldende verslaglegging van de situatie.</p>
+    <div style="padding:40px; text-align:center;">
+        <i class="fa-solid fa-book-open-reader" style="font-size:4rem; color:var(--primary);"></i>
+        <h2>Les 3: Structuur en Grammatica</h2>
+        <p>Analyseer de melding met ASTMA en corrigeer de PV/VD fouten.</p>
+    </div>
+</div>
+
+<!-- Borden 3 & 4 -->
+<div id="screen-3" class="screen"><div class="board-container"><canvas id="canvas-3" class="drawing-canvas"></canvas><div id="label-layer-3" class="drag-layer"></div></div><div class="control-panel"><button class="btn-tool" onclick="togglePen(3)" id="pen-3">🖊️ Pen</button><button class="btn-tool" onclick="clearDrawings(3)">🧹 Wis</button></div></div>
+<div id="screen-4" class="screen"><div class="board-container"><canvas id="canvas-4" class="drawing-canvas"></canvas><div id="label-layer-4" class="drag-layer"></div></div><div class="control-panel"><button class="btn-tool" onclick="togglePen(4)" id="pen-4">🖊️ Pen</button><button class="btn-tool" onclick="clearDrawings(4)">🧹 Wis</button></div></div>
+
+<!-- Scherm 5: Q3 Materiaal met ASTMA Dragables -->
+<div id="screen-5" class="screen">
+    <div class="board-container" style="background-image: url('Q3lesmaterial.png');">
+        <canvas id="canvas-5" class="drawing-canvas"></canvas>
+        <div id="label-layer-5" class="drag-layer"></div>
+    </div>
+    <div class="control-panel">
+        <button class="btn-tool" onclick="togglePen(5)" id="pen-5">🖊️ Pen</button>
+        <button class="btn-tool" onclick="spawnASTMA(5)">🏷️ ASTMA</button>
+        <button class="btn-tool" onclick="clearDrawings(5)">🧹 Wis</button>
+    </div>
+</div>
+
+<!-- Scherm 6: Persoonsvorm & Voltooid Deelwoord Analyse -->
+<div id="screen-6" class="screen">
+    <div class="board-container" style="background-image: url('Q3lesmaterial.png'); opacity: 0.5;">
+        <canvas id="canvas-6" class="drawing-canvas"></canvas>
+        <div id="label-layer-6" class="drag-layer"></div>
+        <div style="position:absolute; top:20px; left:20px; right:20px; background:white; padding:20px; border-radius:8px; border:2px solid var(--primary); z-index:1200;">
+            <h3 style="margin-top:0; color:var(--danger);">PV vs VD Analyse</h3>
+            <p>Identificeer de <strong>Persoonsvorm (PV)</strong> en het <strong>Voltooid Deelwoord (VD)</strong>.</p>
+            <p style="font-style:italic;">"De verdachte <u>is</u> (PV) <u>gevlucht</u> (VD)."</p>
+            <p>Muteer deze op het bord naar een filmische <strong>OVT</strong> (zonder hulpwerkwoord).</p>
         </div>
     </div>
-</div>
-
-<!-- Scherm 3: Digibord met Penfunctie -->
-<div id="screen-3" class="screen">
-    <canvas id="canvas-3" class="drawing-canvas"></canvas>
-    <div id="label-layer-3" class="drag-layer"></div>
-    <div class="control-panel" style="position:absolute; bottom:0; width:100%; display:flex; justify-content:center; gap:10px; padding:10px; background:white; z-index:1100;">
-        <button id="pen-btn-3" onclick="togglePen(3)">🖊️ Pen</button>
-        <button onclick="spawnLabels(3)">🏷️ ASTMA</button>
-        <button onclick="clearDrawings(3)">🧹 Wis Lijnen</button>
+    <div class="control-panel">
+        <button class="btn-tool" onclick="togglePen(6)" id="pen-6">🖊️ Pen</button>
+        <button class="btn-tool" onclick="spawnGrammarLabels(6)">🏷️ PV/VD Labels</button>
+        <button class="btn-tool" onclick="clearDrawings(6)">🧹 Wis</button>
     </div>
 </div>
 
-<!-- Scherm 7: Video + Live Feed (Herstelde tekst) -->
+<!-- Scherm 7: Video -->
 <div id="screen-7" class="screen">
     <div class="video-assignment">
-        <h3 style="margin:0;"><i class="fa-solid fa-video"></i> Opdracht: Muteer de actie</h3>
-        <p style="font-size:0.85rem; margin:5px 0;">Muteer de onderstaande foutieve zinnen (VTT) naar correcte, filmische zinnen (OVT):</p>
-        <ul style="font-size:0.75rem; margin:5px 0; padding-left:20px; opacity:0.9;">
-            <li>"De verdachte is naar de auto gerend."</li>
-            <li>"De collega heeft de achtervolging ingezet."</li>
-        </ul>
+        <h3 style="margin:0;"><i class="fa-solid fa-tower-broadcast"></i> OC-Melding Analyse</h3>
+        <p style="font-size:0.8rem;">Elimineer de PV/VD constructie en schrijf in filmische OVT:</p>
     </div>
-    
     <iframe src="https://www.youtube.com/embed/z8E_f_GIs2c" style="width:100%; height:200px; border:none;" allowfullscreen></iframe>
-    
     <div class="live-feed-container">
         <div id="feedMessages" class="feed-messages"></div>
         <div class="feedback-input-area">
-            <input type="text" id="videoMutationInput" placeholder="Typ jouw mutatie..." style="flex:1; margin:0;">
-            <button id="sendMutationBtn" style="background:var(--primary); color:white; border:none; padding:12px; border-radius:8px; cursor:pointer;">VERSTUUR</button>
+            <input type="text" id="videoMutationInput" placeholder="Schrijf jouw OVT mutatie..." style="margin:0; flex:1;">
+            <button id="sendMutationBtn" style="background:var(--primary); color:white; border:none; padding:10px; border-radius:8px;">STUUR</button>
         </div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, onValue, push, set, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
@@ -130,61 +148,70 @@
     
     let isPenActive = false;
     let drawing = false;
+    let activeCanvasId = null;
+    let dragState = { draggingElement: null, screenId: null, labelKey: null, offsetX: 0, offsetY: 0 };
 
     window.login = () => {
         window.currentClass = document.getElementById('classSelect').value;
         window.userName = document.getElementById('studentName').value || "Medewerker";
-        if (!window.currentClass) return alert("Selecteer een eenheid!");
+        if (!window.currentClass) return alert("Selecteer een eenheid.");
+        
+        const secretTxt = document.getElementById('secretInput').value;
+        if(secretTxt) push(ref(db, `classes/${window.currentClass}/labels/s3`), { text: secretTxt, x: 100, y: 150 });
+        
         document.getElementById('main-nav').style.display = 'flex';
         window.showScreen(2);
         setupSync();
-        setupDrawing(3);
     };
 
     function setupSync() {
-        // Video Feed
         onValue(ref(db, `classes/${window.currentClass}/videoFeed`), (snap) => {
             const feedDiv = document.getElementById('feedMessages');
             feedDiv.innerHTML = "";
             const data = snap.val() || {};
             Object.keys(data).reverse().forEach(key => {
-                const msg = data[key];
-                feedDiv.innerHTML += `<div class="message-item"><div class="message-author">${msg.user}</div>${msg.text}</div>`;
+                feedDiv.innerHTML += `<div class="message-item"><b>${data[key].user}:</b> ${data[key].text}</div>`;
             });
         });
 
-        // Digibord Labels
-        onValue(ref(db, `classes/${window.currentClass}/labels/s3`), (snap) => {
-            const container = document.getElementById('label-layer-3');
-            container.innerHTML = "";
-            const data = snap.val() || {};
-            Object.keys(data).forEach(key => {
-                const l = document.createElement('div');
-                l.className = 'draggable-label';
-                l.style.left = data[key].x + 'px';
-                l.style.top = data[key].y + 'px';
-                l.innerText = data[key].text;
-                container.appendChild(l);
+        [3,4,5,6].forEach(id => {
+            onValue(ref(db, `classes/${window.currentClass}/labels/s${id}`), (snap) => {
+                const container = document.getElementById(`label-layer-${id}`);
+                container.innerHTML = "";
+                const data = snap.val() || {};
+                Object.keys(data).forEach(key => {
+                    const l = document.createElement('div');
+                    l.className = 'draggable-label';
+                    l.style.left = data[key].x + 'px'; l.style.top = data[key].y + 'px';
+                    l.innerText = data[key].text;
+                    l.onmousedown = (e) => startDrag(e, l, id, key);
+                    l.ontouchstart = (e) => startDrag(e.touches[0], l, id, key);
+                    container.appendChild(l);
+                });
             });
-        });
 
-        // Digibord Pen-sync
-        onValue(ref(db, `classes/${window.currentClass}/drawings/s3`), (snap) => {
-            const canvas = document.getElementById('canvas-3');
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            img.onload = () => { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0); };
-            img.src = snap.val() || "";
+            onValue(ref(db, `classes/${window.currentClass}/drawings/s${id}`), (snap) => {
+                const canvas = document.getElementById(`canvas-${id}`);
+                const ctx = canvas.getContext('2d');
+                const img = new Image();
+                img.onload = () => { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0); };
+                img.src = snap.val() || "";
+            });
+            setupDrawingLogic(id);
         });
     }
 
-    function setupDrawing(id) {
+    function startDrag(e, el, screenId, key) {
+        dragState = { draggingElement: el, screenId: screenId, labelKey: key, offsetX: e.clientX - el.offsetLeft, offsetY: e.clientY - el.offsetTop };
+    }
+
+    function setupDrawingLogic(id) {
         const canvas = document.getElementById(`canvas-${id}`);
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight - 150;
-        ctx.strokeStyle = "#1c2b4b"; ctx.lineWidth = 3; ctx.lineCap = "round";
+        ctx.strokeStyle = "#1c2b4b"; ctx.lineWidth = 4; ctx.lineCap = "round";
 
-        const start = (e) => { if(!isPenActive) return; drawing = true; ctx.beginPath(); };
+        const start = () => { if(!isPenActive || activeCanvasId !== id) return; drawing = true; ctx.beginPath(); };
         const move = (e) => {
             if(!drawing) return;
             const r = canvas.getBoundingClientRect();
@@ -193,16 +220,17 @@
             ctx.lineTo(x, y); ctx.stroke();
         };
         const end = () => { if(drawing) { drawing = false; set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL()); } };
-
-        canvas.addEventListener('mousedown', start); canvas.addEventListener('touchstart', start);
-        canvas.addEventListener('mousemove', move); canvas.addEventListener('touchmove', move);
-        window.addEventListener('mouseup', end); window.addEventListener('touchend', end);
+        canvas.onmousedown = start; canvas.ontouchstart = start;
+        canvas.onmousemove = move; canvas.ontouchmove = move;
+        window.onmouseup = end; window.ontouchend = end;
     }
 
     window.togglePen = (id) => {
         isPenActive = !isPenActive;
+        activeCanvasId = isPenActive ? id : null;
+        document.querySelectorAll('.btn-tool').forEach(b => b.classList.remove('active'));
+        if(isPenActive) document.getElementById(`pen-${id}`).classList.add('active');
         document.getElementById(`canvas-${id}`).classList.toggle('active', isPenActive);
-        document.getElementById(`pen-btn-${id}`).classList.toggle('pen-active-btn', isPenActive);
     };
 
     window.showScreen = (n) => {
@@ -212,6 +240,16 @@
         document.querySelector(`[data-screen="${n}"]`)?.classList.add('active');
     };
 
+    window.spawnASTMA = (id) => ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"].forEach(t => {
+        push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text: t, x: 50, y: 50 });
+    });
+
+    window.spawnGrammarLabels = (id) => ["Persoonsvorm (PV)", "Voltooid Deelwoord (VD)", "Hulpwerkwoord", "Filmische OVT"].forEach(t => {
+        push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text: t, x: 100, y: 200 });
+    });
+
+    window.clearDrawings = (id) => remove(ref(db, `classes/${window.currentClass}/drawings/s${id}`));
+
     document.getElementById('sendMutationBtn').onclick = () => {
         const input = document.getElementById('videoMutationInput');
         if (input.value) {
@@ -220,17 +258,17 @@
         }
     };
 
-    window.spawnLabels = (id) => ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"].forEach(t => {
-        push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text: t, x: 50, y: 50 });
-    });
-
-    window.clearDrawings = (id) => remove(ref(db, `classes/${window.currentClass}/drawings/s${id}`));
+    // Global Movement
+    const handleMove = (e) => {
+        if(!dragState.draggingElement) return;
+        const x = (e.clientX || e.touches[0].clientX) - dragState.offsetX;
+        const y = (e.clientY || e.touches[0].clientY) - dragState.offsetY;
+        update(ref(db, `classes/${window.currentClass}/labels/s${dragState.screenId}/${dragState.labelKey}`), { x, y });
+    };
+    window.addEventListener('mousemove', handleMove); window.addEventListener('touchmove', handleMove);
+    window.addEventListener('mouseup', () => dragState.draggingElement = null); window.addEventListener('touchend', () => dragState.draggingElement = null);
 
     document.getElementById('loginBtn').onclick = () => window.login();
-    document.getElementById('sendPreBtn').onclick = () => {
-        const txt = document.getElementById('secretInput').value;
-        if(txt) push(ref(db, `classes/${window.currentClass}/labels/s3`), { text: txt, x: 100, y: 100 });
-    };
     document.querySelectorAll('.nav-btn').forEach(btn => btn.onclick = () => window.showScreen(btn.dataset.screen));
 </script>
 </body>
