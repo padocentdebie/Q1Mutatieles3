@@ -3,190 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Q1Mutatie Les 3 - Volledige Functionaliteit</title>
+    <title>Q1 Mutatie Les 3 - Politie Academie</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        * {
-            box-sizing: border-box;
-            user-select: none; /* betere touch UX op dragables */
-            touch-action: pan-y; /* voorkomt scroll tijdens tekenen? specifiek voor canvas */
+        * { box-sizing: border-box; user-select: none; touch-action: pan-y; }
+        :root { 
+            --primary: #1c2b4b; 
+            --secondary: #f4f7f9; 
+            --accent: #d4af37; 
+            --white: #ffffff; 
+            --text: #2c3e50;
         }
-        :root { --primary: #003082; --secondary: #f0f2f5; --accent: #d32f2f; --white: #ffffff; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--secondary); margin: 0; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--secondary); margin: 0; height: 100vh; display: flex; flex-direction: column; color: var(--text); }
         
-        #main-nav { background: var(--primary); padding: 10px; display: none; justify-content: center; flex-wrap: wrap; gap: 8px; z-index: 2000; flex-shrink: 0; }
-        .nav-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: 0.2s; }
-        .nav-btn.active { background: var(--white); color: var(--primary); }
+        #main-nav { background: var(--primary); padding: 10px; display: none; justify-content: center; gap: 10px; z-index: 2000; border-bottom: 3px solid var(--accent); }
+        .nav-btn { background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(212,175,55,0.3); padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .nav-btn.active { background: var(--accent); color: var(--primary); }
 
-        .screen { flex-grow: 1; display: none; width: 100%; height: calc(100vh - 60px); position: relative; overflow: hidden; background: #f4f7fc; }
+        .screen { flex-grow: 1; display: none; width: 100%; height: calc(100vh - 65px); position: relative; overflow: hidden; }
         .screen.active { display: flex; flex-direction: column; }
 
-        .instruction-container { padding: 20px; max-width: 950px; margin: 10px auto; overflow-y: auto; flex: 1; width: 100%; }
-        .instruction-box { background: var(--white); padding: 25px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border-left: 8px solid var(--primary); }
-        .step-highlight { background: #eef2f7; padding: 15px; border-radius: 12px; margin: 15px 0; border-left: 4px solid var(--primary); }
-        
-        /* Canvas tekenlaag */
-        .drawing-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 500; pointer-events: none; touch-action: none; }
+        /* Canvas & Tekenen */
+        .drawing-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 500; pointer-events: none; }
         .drawing-canvas.active { pointer-events: auto; cursor: crosshair; }
+        .pen-active-btn { background: var(--danger, #e74c3c) !important; color: white !important; }
+
+        /* Login */
+        #screen-login { display: flex; justify-content: center; align-items: center; background: var(--primary); height: 100vh; }
+        .login-box { background: var(--white); padding: 40px; border-radius: 12px; text-align: center; width: 90%; max-width: 420px; border-bottom: 8px solid var(--accent); }
+        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+
+        /* Video Scherm Styling */
+        .video-assignment { background: #1c2b4b; color: white; padding: 15px; border-bottom: 3px solid var(--accent); }
+        .live-feed-container { background: #fff; margin: 10px; border-radius: 12px; display: flex; flex-direction: column; flex: 1; min-height: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .feed-messages { flex: 1; overflow-y: auto; padding: 15px; background: #fafafa; border-bottom: 1px solid #eee; }
+        .message-item { background: #fff; border-left: 4px solid var(--primary); padding: 10px; margin-bottom: 8px; border-radius: 4px; }
+        .message-author { font-weight: bold; font-size: 0.8rem; color: var(--accent); }
         
+        .feedback-input-area { padding: 15px; background: #fff; display: flex; gap: 10px; }
         .drag-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
-        
-        .draggable-label { 
-            position: absolute; background: var(--white); border: 2px solid var(--primary); 
-            padding: 8px 14px; border-radius: 30px; cursor: grab; font-weight: bold; 
-            pointer-events: auto; box-shadow: 0 6px 12px rgba(0,0,0,0.15); user-select: none; 
-            display: flex; align-items: center; gap: 10px; white-space: nowrap; touch-action: none; z-index: 1001;
-            font-size: 0.9rem; background: #fff9e8; transition: 0.05s linear;
-        }
-        .draggable-label:active { cursor: grabbing; }
-        .delete-icon { color: var(--accent); cursor: pointer; font-size: 1.2rem; background: rgba(255,255,240,0.8); border-radius: 50%; padding: 2px; }
-
-        .control-panel { background: white; padding: 10px 12px; display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; border-top: 1px solid #ddd; z-index: 1500; flex-shrink: 0; box-shadow: 0 -2px 8px rgba(0,0,0,0.05); }
-        .pen-active-btn { background: #4caf50 !important; color: white !important; border-color: #2e7d32; }
-        button, .ctrl-btn { background: #e9ecef; border: none; padding: 8px 16px; border-radius: 40px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 0.85rem; margin: 2px; }
-        button:active { transform: scale(0.96); }
-
-        #screen-login { display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #003082 0%, #2050a0 100%); height: 100vh; width: 100%; }
-        .login-box { background: var(--white); padding: 30px; border-radius: 28px; text-align: center; width: 90%; max-width: 380px; box-shadow: 0 20px 30px rgba(0,0,0,0.3); }
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 40px; box-sizing: border-box; font-size: 1rem; }
-        iframe { width: 100%; height: 100%; border: none; flex: 1; }
-
-        /* live-feed sectie voor scherm 4 en 5 */
-        .live-feed-area {
-            background: white;
-            border-radius: 24px;
-            margin: 12px;
-            padding: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1200;
-            border: 1px solid #ddd;
-            background: #fffffa;
-        }
-        .live-feed-title { font-weight: bold; color: var(--primary); border-bottom: 2px solid var(--primary); margin-bottom: 8px; display: flex; gap: 10px; align-items: center; }
-        .live-feed-message { padding: 6px 10px; margin: 4px 0; background: #f1f3f7; border-radius: 20px; font-size: 0.85rem; word-break: break-word; }
-        .feedback-box { background: #e8f0fe; border-left: 6px solid #003082; padding: 10px; border-radius: 16px; margin-top: 8px; }
-        .flex-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-        .image-preview { max-width: 100%; max-height: 280px; border-radius: 16px; margin: 10px auto; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.1); object-fit: contain; background: white; }
+        .draggable-label { position: absolute; background: #fff; border: 1.5px solid var(--primary); padding: 10px 16px; border-radius: 4px; cursor: grab; font-weight: bold; pointer-events: auto; box-shadow: 4px 4px 0px var(--accent); }
     </style>
 </head>
 <body>
 
 <nav id="main-nav">
-    <button class="nav-btn active" data-screen="2">1. Uitleg</button>
-    <button class="nav-btn" data-screen="3">2. Digibord</button>
-    <button class="nav-btn" data-screen="4">3. Tekst-delen</button>
-    <button class="nav-btn" data-screen="5">4. Zinsdelen</button>
-    <button class="nav-btn" data-screen="7">5. YouTube</button>
+    <button class="nav-btn active" data-screen="2">Instructie</button>
+    <button class="nav-btn" data-screen="3">Digibord</button>
+    <button class="nav-btn" data-screen="7">Mutatie Video</button>
 </nav>
 
-<!-- Scherm 1 (Login) -->
+<!-- Scherm 1: Login -->
 <div id="screen-1" class="screen active">
     <div id="screen-login">
         <div class="login-box">
-            <h2 style="color: var(--primary);">📘 Mutatie Les 3</h2>
-            <input type="text" id="studentName" placeholder="Jouw naam..." autocomplete="off">
+            <h2 style="color: var(--primary);">POLITIE ACADEMIE</h2>
+            <input type="text" id="studentName" placeholder="Naam medewerker...">
             <select id="classSelect">
-                <option value="" disabled selected>Kies je klas</option>
+                <option value="" disabled selected>Kies een eenheid</option>
                 <option value="Alpha">Alpha</option><option value="Bravo">Bravo</option><option value="Charlie">Charlie</option>
                 <option value="Delta">Delta</option><option value="Echo">Echo</option><option value="Foxtrot">Foxtrot</option>
-                <option value="Golf">Golf</option><option value="Hotel">Hotel</option><option value="India">India</option>
-                <option value="Juliet">Juliet</option><option value="Kilo">Kilo</option><option value="Lima">Lima</option>
-                <option value="Mike">Mike</option>
             </select>
-            <textarea id="secretInput" placeholder="✏️ Typ hier jouw zin / tekst voor het bord..." rows="2"></textarea>
-            <button id="sendPreBtn" style="background:#555; color:white; border:none; border-radius:40px; margin-bottom:8px;">📌 Zet op bord (digibord)</button>
-            <button id="loginBtn" style="background:var(--primary); color:white; border:none; border-radius:40px; font-weight:bold; padding:14px;">🚀 Start de les</button>
+            <textarea id="secretInput" placeholder="Zin voor het digibord..."></textarea>
+            <button id="sendPreBtn" style="cursor:pointer;">📌 Zet op bord</button>
+            <button id="loginBtn" style="background:var(--primary); color:var(--accent); font-weight:bold; margin-top:10px; cursor:pointer; width:100%; border:none; padding:15px; border-radius:8px;">START TRAINING</button>
         </div>
     </div>
 </div>
 
-<!-- Scherm 2: Uitleg / Instructie -->
+<!-- Scherm 2: Instructie -->
 <div id="screen-2" class="screen">
-    <div class="instruction-container">
-        <div class="instruction-box">
-            <h1><i class="fa-regular fa-lightbulb"></i> Zoek de persoonsvorm</h1>
-            <p>Hoe herken je het <strong>voltooid deelwoord</strong> in een zin?</p>
-            <div class="step-highlight"><strong>Stap 1:</strong> Zoek de persoonsvorm (vraagzin of tijdproef).<br>
-            <strong>Stap 2:</strong> Is dat een vorm van <span style="background:#fff0b3;">'hebben', 'zijn' of 'worden'</span>?<br>
-            Dan zoek je het <strong>tweede werkwoord</strong> → dat is het <strong>voltooid deelwoord</strong>.</div>
-            <div class="step-highlight">👉 Het voltooid deelwoord begint vaak met <strong>'ge-' , 'be-' , 'ver-' , 'ont-'</strong>.<br>
-            <strong>Tip:</strong> Bij de onvoltooid verleden tijd (ovt) gebruikt de politie de term 'filmisch'. Je helpt de lezer met korte beschrijvingen met actieve zinnen.</div>
-            <p><i class="fa-regular fa-comment"></i> Sleep de labels op het digibord, teken cirkels, en werk samen!</p>
-            <div style="margin-top:20px; background:#eef2fa; padding:12px; border-radius:20px;">
-                <i class="fa-regular fa-image"></i> <strong>Voorbeeld afbeelding (Q3lesmaterial.png):</strong><br>
-                <img id="instructionImage" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100' viewBox='0 0 200 100'%3E%3Crect width='200' height='100' fill='%23003082'/%3E%3Ctext x='20' y='55' fill='white' font-size='14'%3EQ3 lesmaterial - voorbeeld%3C/text%3E%3C/svg%3E" style="max-width:100%; border-radius:12px; margin-top:8px;" alt="Q3lesmaterial">
-            </div>
+    <div style="padding:20px;">
+        <div style="background:white; padding:30px; border-radius:12px; border-top:6px solid var(--accent);">
+            <h1><i class="fa-solid fa-shield-halved"></i> Methodiek</h1>
+            <p><strong>Het Voltooid Deelwoord:</strong> Identificeer de persoonsvorm. Is het <em>hebben, zijn of worden</em>? Dan staat de actieve handeling als voltooid deelwoord achterin de zin.</p>
+            <p><strong>Filmisch schrijven:</strong> Gebruik de <strong>onvoltooid verleden tijd (OVT)</strong> voor een actieve, beeldende verslaglegging van de situatie.</p>
         </div>
     </div>
 </div>
 
-<!-- Scherm 3: Digibord met labels + spawn ASTMA + afbeelding achtergrond optioneel -->
+<!-- Scherm 3: Digibord met Penfunctie -->
 <div id="screen-3" class="screen">
     <canvas id="canvas-3" class="drawing-canvas"></canvas>
     <div id="label-layer-3" class="drag-layer"></div>
-    <div class="live-feed-area" style="position: absolute; bottom: 70px; right: 12px; left: 12px; max-height: 130px; background: rgba(255,255,245,0.95); z-index: 1050; backdrop-filter: blur(2px); border-radius: 20px; pointer-events: none;">
-        <div class="live-feed-title"><i class="fa-regular fa-message"></i> Live feedback klas</div>
-        <div id="liveFeedbackScreen3" style="font-size:0.8rem; max-height:80px; overflow-y:auto;"></div>
-    </div>
-    <div class="control-panel" style="position: absolute; bottom: 0; left: 0; right: 0;">
+    <div class="control-panel" style="position:absolute; bottom:0; width:100%; display:flex; justify-content:center; gap:10px; padding:10px; background:white; z-index:1100;">
         <button id="pen-btn-3" onclick="togglePen(3)">🖊️ Pen</button>
-        <button onclick="spawnLabels(3)">🏷️ Spawn ASTMA (5 delen)</button>
-        <button onclick="clearDrawings(3)">🧹 Wis lijnen</button>
-        <button onclick="clearBoard(3)">🗑️ Wis alles (labels)</button>
-        <button id="imageDemoBtn3" onclick="addBackgroundImage(3)">🖼️ Toon Q3 afbeelding</button>
+        <button onclick="spawnLabels(3)">🏷️ ASTMA</button>
+        <button onclick="clearDrawings(3)">🧹 Wis Lijnen</button>
     </div>
 </div>
 
-<!-- Scherm 4: Tekst-delen + livefeed en feedback invoerveld -->
-<div id="screen-4" class="screen">
-    <canvas id="canvas-4" class="drawing-canvas"></canvas>
-    <div id="label-layer-4" class="drag-layer"></div>
-    <div style="position: absolute; bottom: 80px; left: 12px; right: 12px; z-index: 1100; max-height: 44%; background: rgba(255,255,240,0.95); border-radius: 28px; padding: 12px; overflow-y: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.2); pointer-events: auto;">
-        <div class="live-feed-title"><i class="fa-regular fa-comments"></i> 📢 Live Tekst & Feedback</div>
-        <div id="liveTextFeed" style="max-height: 100px; overflow-y: auto; background: #faf9ff; border-radius: 20px; padding: 6px;"></div>
-        <div class="flex-row" style="margin-top: 8px;">
-            <input type="text" id="feedbackInput4" placeholder="Typ feedback voor de klas..." style="flex:1; border-radius: 40px;">
-            <button id="sendFeedback4" style="background:var(--primary); color:white;">💬 Verstuur</button>
-        </div>
-        <div id="feedbackArea4" class="feedback-box"></div>
-    </div>
-    <div class="control-panel">
-        <button id="pen-btn-4" onclick="togglePen(4)">🖊️ Pen</button>
-        <button onclick="clearDrawings(4)">🧹 Wis lijnen</button>
-        <button onclick="spawnDemoTextLabels(4)">📄 Voeg tekstlabel</button>
-    </div>
-</div>
-
-<!-- Scherm 5: Zinsdelen (soortgelijk) -->
-<div id="screen-5" class="screen">
-    <canvas id="canvas-5" class="drawing-canvas"></canvas>
-    <div id="label-layer-5" class="drag-layer"></div>
-    <div style="position: absolute; bottom: 80px; left: 12px; right: 12px; z-index: 1100; max-height: 44%; background: rgba(255,255,240,0.95); border-radius: 28px; padding: 12px; overflow-y: auto; pointer-events: auto;">
-        <div class="live-feed-title"><i class="fa-regular fa-copy"></i> Zinsdelen & feedback</div>
-        <div id="liveTextFeed5" style="max-height: 100px; overflow-y: auto; background: #f0f4fa; border-radius: 20px; padding: 6px;"></div>
-        <div class="flex-row" style="margin-top: 8px;">
-            <input type="text" id="feedbackInput5" placeholder="Geef tip over persoonsvorm..." style="flex:1; border-radius: 40px;">
-            <button id="sendFeedback5" style="background:var(--primary); color:white;">💬 Feedback</button>
-        </div>
-        <div id="feedbackArea5" class="feedback-box"></div>
-    </div>
-    <div class="control-panel">
-        <button id="pen-btn-5" onclick="togglePen(5)">🖊️ Pen</button>
-        <button onclick="clearDrawings(5)">🧹 Wis lijnen</button>
-        <button onclick="spawnZinsLabels(5)">🔖 Voeg zinsdeellabels</button>
-    </div>
-</div>
-
-<!-- Scherm 7: YouTube -->
+<!-- Scherm 7: Video + Live Feed (Herstelde tekst) -->
 <div id="screen-7" class="screen">
-    <iframe src="https://www.youtube.com/embed/z8E_f_GIs2c?si=8jKxAa0V9GlWQpYv" title="YouTube video" allowfullscreen></iframe>
+    <div class="video-assignment">
+        <h3 style="margin:0;"><i class="fa-solid fa-video"></i> Opdracht: Muteer de actie</h3>
+        <p style="font-size:0.85rem; margin:5px 0;">Muteer de onderstaande foutieve zinnen (VTT) naar correcte, filmische zinnen (OVT):</p>
+        <ul style="font-size:0.75rem; margin:5px 0; padding-left:20px; opacity:0.9;">
+            <li>"De verdachte is naar de auto gerend."</li>
+            <li>"De collega heeft de achtervolging ingezet."</li>
+        </ul>
+    </div>
+    
+    <iframe src="https://www.youtube.com/embed/z8E_f_GIs2c" style="width:100%; height:200px; border:none;" allowfullscreen></iframe>
+    
+    <div class="live-feed-container">
+        <div id="feedMessages" class="feed-messages"></div>
+        <div class="feedback-input-area">
+            <input type="text" id="videoMutationInput" placeholder="Typ jouw mutatie..." style="flex:1; margin:0;">
+            <button id="sendMutationBtn" style="background:var(--primary); color:white; border:none; padding:12px; border-radius:8px; cursor:pointer;">VERSTUUR</button>
+        </div>
+    </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, onValue, push, remove, set, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, onValue, push, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
@@ -197,246 +128,110 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     
-    window.currentClass = "";
     let isPenActive = false;
-    let currentPenScreen = null;
     let drawing = false;
-    let dragState = { draggingElement: null, screenId: null, labelKey: null, offsetX: 0, offsetY: 0 };
-    
-    // Login procedure
-    window.login = async () => {
-        const klas = document.getElementById('classSelect').value;
-        const name = document.getElementById('studentName').value.trim();
-        if (!klas) return alert("Kies eerst een klas!");
-        
-        window.currentClass = klas;
-        if(name) localStorage.setItem("lastStudent", name);
-        
-        await ensureClassData();
 
+    window.login = () => {
+        window.currentClass = document.getElementById('classSelect').value;
+        window.userName = document.getElementById('studentName').value || "Medewerker";
+        if (!window.currentClass) return alert("Selecteer een eenheid!");
         document.getElementById('main-nav').style.display = 'flex';
         window.showScreen(2);
-        
-        setupAllSync();
-        setupDrawingEvents();
-        setupGlobalDrag();
-        attachFeedbackAndTextListeners();
+        setupSync();
+        setupDrawing(3);
     };
 
-    async function ensureClassData() {
-        const classRef = ref(db, `classes/${window.currentClass}`);
-        const snap = await get(classRef);
-        if(!snap.exists()) await set(classRef, { createdAt: Date.now() });
-    }
+    function setupSync() {
+        // Video Feed
+        onValue(ref(db, `classes/${window.currentClass}/videoFeed`), (snap) => {
+            const feedDiv = document.getElementById('feedMessages');
+            feedDiv.innerHTML = "";
+            const data = snap.val() || {};
+            Object.keys(data).reverse().forEach(key => {
+                const msg = data[key];
+                feedDiv.innerHTML += `<div class="message-item"><div class="message-author">${msg.user}</div>${msg.text}</div>`;
+            });
+        });
 
-    // Centrale functie voor labels toevoegen
-    function addLabelToBoard(text, screenId) {
-        if (!text || !window.currentClass) return;
-        const labelRef = ref(db, `classes/${window.currentClass}/labels/s${screenId}`);
-        push(labelRef, {
-            text: text,
-            x: 100 + Math.random() * 50,
-            y: 100 + Math.random() * 50
+        // Digibord Labels
+        onValue(ref(db, `classes/${window.currentClass}/labels/s3`), (snap) => {
+            const container = document.getElementById('label-layer-3');
+            container.innerHTML = "";
+            const data = snap.val() || {};
+            Object.keys(data).forEach(key => {
+                const l = document.createElement('div');
+                l.className = 'draggable-label';
+                l.style.left = data[key].x + 'px';
+                l.style.top = data[key].y + 'px';
+                l.innerText = data[key].text;
+                container.appendChild(l);
+            });
+        });
+
+        // Digibord Pen-sync
+        onValue(ref(db, `classes/${window.currentClass}/drawings/s3`), (snap) => {
+            const canvas = document.getElementById('canvas-3');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = () => { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0); };
+            img.src = snap.val() || "";
         });
     }
+
+    function setupDrawing(id) {
+        const canvas = document.getElementById(`canvas-${id}`);
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight - 150;
+        ctx.strokeStyle = "#1c2b4b"; ctx.lineWidth = 3; ctx.lineCap = "round";
+
+        const start = (e) => { if(!isPenActive) return; drawing = true; ctx.beginPath(); };
+        const move = (e) => {
+            if(!drawing) return;
+            const r = canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - r.left;
+            const y = (e.clientY || e.touches[0].clientY) - r.top;
+            ctx.lineTo(x, y); ctx.stroke();
+        };
+        const end = () => { if(drawing) { drawing = false; set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL()); } };
+
+        canvas.addEventListener('mousedown', start); canvas.addEventListener('touchstart', start);
+        canvas.addEventListener('mousemove', move); canvas.addEventListener('touchmove', move);
+        window.addEventListener('mouseup', end); window.addEventListener('touchend', end);
+    }
+
+    window.togglePen = (id) => {
+        isPenActive = !isPenActive;
+        document.getElementById(`canvas-${id}`).classList.toggle('active', isPenActive);
+        document.getElementById(`pen-btn-${id}`).classList.toggle('pen-active-btn', isPenActive);
+    };
 
     window.showScreen = (n) => {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(`screen-${n}`).classList.add('active');
-        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`.nav-btn[data-screen="${n}"]`)?.classList.add('active');
-        
-        if([3,4,5].includes(n)) {
-            setTimeout(() => resizeCanvas(n), 50);
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`[data-screen="${n}"]`)?.classList.add('active');
+    };
+
+    document.getElementById('sendMutationBtn').onclick = () => {
+        const input = document.getElementById('videoMutationInput');
+        if (input.value) {
+            push(ref(db, `classes/${window.currentClass}/videoFeed`), { user: window.userName, text: input.value });
+            input.value = "";
         }
     };
 
-    window.togglePen = (screenId) => {
-        if(currentPenScreen !== screenId && isPenActive) {
-            document.getElementById(`canvas-${currentPenScreen}`)?.classList.remove('active');
-            document.getElementById(`pen-btn-${currentPenScreen}`)?.classList.remove('pen-active-btn');
-        }
-        isPenActive = !isPenActive;
-        currentPenScreen = isPenActive ? screenId : null;
-        const canvas = document.getElementById(`canvas-${screenId}`);
-        if(canvas) canvas.classList.toggle('active', isPenActive);
-        const penBtn = document.getElementById(`pen-btn-${screenId}`);
-        if(penBtn) penBtn.classList.toggle('pen-active-btn', isPenActive);
-    };
+    window.spawnLabels = (id) => ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"].forEach(t => {
+        push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text: t, x: 50, y: 50 });
+    });
 
-    // --- Drag & Drop Logica ---
-    function dragStart(e, screenId, labelKey, element) {
-        if(isPenActive) return; 
-        const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : 0);
-        const clientY = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
-        
-        dragState.draggingElement = element;
-        dragState.screenId = screenId;
-        dragState.labelKey = labelKey;
-        dragState.offsetX = clientX - element.offsetLeft;
-        dragState.offsetY = clientY - element.offsetTop;
-        element.style.zIndex = 2000;
-    }
-
-    function setupGlobalDrag() {
-        const onMove = (e) => {
-            if(!dragState.draggingElement) return;
-            const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : 0);
-            const clientY = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
-            dragState.draggingElement.style.left = (clientX - dragState.offsetX) + 'px';
-            dragState.draggingElement.style.top = (clientY - dragState.offsetY) + 'px';
-            e.preventDefault();
-        };
-
-        const onEnd = () => {
-            if(dragState.draggingElement) {
-                const x = parseInt(dragState.draggingElement.style.left);
-                const y = parseInt(dragState.draggingElement.style.top);
-                update(ref(db, `classes/${window.currentClass}/labels/s${dragState.screenId}/${dragState.labelKey}`), { x, y });
-                dragState.draggingElement.style.zIndex = 1001;
-                dragState.draggingElement = null;
-            }
-        };
-
-        window.addEventListener('mousemove', onMove);
-        window.addEventListener('touchmove', onMove, { passive: false });
-        window.addEventListener('mouseup', onEnd);
-        window.addEventListener('touchend', onEnd);
-    }
-
-    // --- Sync & Database ---
-    function setupAllSync() {
-        [3,4,5].forEach(id => {
-            onValue(ref(db, `classes/${window.currentClass}/labels/s${id}`), (snap) => {
-                const labels = snap.val() || {};
-                const container = document.getElementById(`label-layer-${id}`);
-                if(!container) return;
-
-                container.querySelectorAll('.draggable-label').forEach(el => {
-                    const key = el.getAttribute('data-key');
-                    if(!labels[key]) el.remove();
-                });
-
-                Object.keys(labels).forEach(key => {
-                    let el = container.querySelector(`[data-key="${key}"]`);
-                    if(!el) {
-                        el = document.createElement('div');
-                        el.className = 'draggable-label';
-                        el.setAttribute('data-key', key);
-                        el.innerHTML = `<span>${labels[key].text}</span><i class="fa-solid fa-circle-xmark delete-icon"></i>`;
-                        el.querySelector('.delete-icon').onclick = (e) => {
-                            e.stopPropagation();
-                            remove(ref(db, `classes/${window.currentClass}/labels/s${id}/${key}`));
-                        };
-                        el.addEventListener('mousedown', (e) => dragStart(e, id, key, el));
-                        el.addEventListener('touchstart', (e) => dragStart(e, id, key, el));
-                        container.appendChild(el);
-                    }
-                    if(dragState.draggingElement !== el) {
-                        el.style.left = labels[key].x + 'px';
-                        el.style.top = labels[key].y + 'px';
-                    }
-                });
-            });
-
-            onValue(ref(db, `classes/${window.currentClass}/drawings/s${id}`), (snap) => {
-                const canvas = document.getElementById(`canvas-${id}`);
-                const ctx = canvas.getContext('2d');
-                const val = snap.val();
-                if(val) {
-                    const img = new Image();
-                    img.onload = () => { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0,canvas.width,canvas.height); };
-                    img.src = val;
-                } else {
-                    ctx.clearRect(0,0,canvas.width,canvas.height);
-                }
-            });
-        });
-    }
-
-    function setupDrawingEvents() {
-        [3,4,5].forEach(id => {
-            const canvas = document.getElementById(`canvas-${id}`);
-            const ctx = canvas.getContext('2d');
-            const startDraw = (e) => {
-                if(!isPenActive || currentPenScreen !== id) return;
-                drawing = true;
-                const rect = canvas.getBoundingClientRect();
-                const x = (e.clientX ?? e.touches[0].clientX) - rect.left;
-                const y = (e.clientY ?? e.touches[0].clientY) - rect.top;
-                ctx.beginPath(); ctx.moveTo(x, y);
-            };
-            const draw = (e) => {
-                if(!drawing) return;
-                const rect = canvas.getBoundingClientRect();
-                const x = (e.clientX ?? e.touches[0].clientX) - rect.left;
-                const y = (e.clientY ?? e.touches[0].clientY) - rect.top;
-                ctx.strokeStyle = "#d32f2f"; ctx.lineWidth = 3; ctx.lineTo(x, y); ctx.stroke();
-                e.preventDefault();
-            };
-            const endDraw = () => {
-                if(drawing) {
-                    drawing = false;
-                    set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL());
-                }
-            };
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            window.addEventListener('mouseup', endDraw);
-            canvas.addEventListener('touchstart', startDraw);
-            canvas.addEventListener('touchmove', draw, { passive: false });
-            window.addEventListener('touchend', endDraw);
-        });
-    }
-
-    function attachFeedbackAndTextListeners() {
-        // De fix voor de tekst op het bord plaatsen
-        document.getElementById('sendPreBtn').onclick = () => {
-            const txt = document.getElementById('secretInput').value.trim();
-            if(txt) {
-                addLabelToBoard(txt, 3);
-                document.getElementById('secretInput').value = "";
-            } else {
-                alert("Typ eerst een zin!");
-            }
-        };
-
-        document.getElementById('sendFeedback4').onclick = () => {
-            const msg = document.getElementById('feedbackInput4').value.trim();
-            if(msg) push(ref(db, `classes/${window.currentClass}/feedbackMessages`), { message: msg, author: "Docent", timestamp: Date.now() });
-            document.getElementById('feedbackInput4').value = '';
-        };
-
-        document.getElementById('sendFeedback5').onclick = () => {
-            const msg = document.getElementById('feedbackInput5').value.trim();
-            if(msg) push(ref(db, `classes/${window.currentClass}/feedbackMessages`), { message: msg, author: "Leerling", timestamp: Date.now() });
-            document.getElementById('feedbackInput5').value = '';
-        };
-    }
-
-    function resizeCanvas(id) {
-        const c = document.getElementById(`canvas-${id}`);
-        if(c && c.parentElement) {
-            c.width = c.parentElement.clientWidth;
-            c.height = c.parentElement.clientHeight;
-        }
-    }
-
-    // Oorspronkelijke label-teksten teruggezet
-    window.spawnLabels = (id) => ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"].forEach(t => addLabelToBoard(t, id));
-    window.spawnDemoTextLabels = (id) => addLabelToBoard("✏️ Tekstdeel: 'hij heeft gewerkt'", id);
-    window.spawnZinsLabels = (id) => addLabelToBoard("📖 persoonsvorm", id);
     window.clearDrawings = (id) => remove(ref(db, `classes/${window.currentClass}/drawings/s${id}`));
-    window.clearBoard = (id) => remove(ref(db, `classes/${window.currentClass}/labels/s${id}`));
-    window.addBackgroundImage = (id) => {
-        const canvas = document.getElementById(`canvas-${id}`);
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'%3E%3Crect width='400' height='200' fill='%23f2e8cf'/%3E%3Ctext x='30' y='50' fill='%23003082' font-size='20'%3EQ3 lesmaterial.png%3C/text%3E%3Ctext x='30' y='100' fill='%23555555'%3EVoltooid deelwoord: gelopen, gemaakt%3C/text%3E%3C/svg%3E";
-        img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL()); };
-    };
 
-    document.getElementById('loginBtn').addEventListener('click', () => window.login());
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', () => { const scr = btn.getAttribute('data-screen'); if(scr) window.showScreen(parseInt(scr)); }));
+    document.getElementById('loginBtn').onclick = () => window.login();
+    document.getElementById('sendPreBtn').onclick = () => {
+        const txt = document.getElementById('secretInput').value;
+        if(txt) push(ref(db, `classes/${window.currentClass}/labels/s3`), { text: txt, x: 100, y: 100 });
+    };
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.onclick = () => window.showScreen(btn.dataset.screen));
 </script>
+</body>
 </html>
