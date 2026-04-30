@@ -153,7 +153,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, push, remove, update, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.app";
+        import { getDatabase, ref, onValue, push, remove, update, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
@@ -165,7 +165,9 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         window.currentClass = "";
-        let isPenActive = false;
+        
+        // Pen state per scherm
+        let penActive = { 3: false, 5: false, 6: false };
         let drawing = false;
         let draggingElement = null;
         let dragSid = null;
@@ -214,8 +216,14 @@
         function setupGlobalDragEvents() {
             const onMove = (e) => {
                 if (!draggingElement) return;
-                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                let clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
                 const newX = clientX - dragOffset.x;
                 const newY = clientY - dragOffset.y;
                 draggingElement.style.left = newX + 'px';
@@ -241,11 +249,17 @@
             el.innerHTML = `<span>${obj.text}</span>`;
             
             const startDrag = (e) => {
-                if (isPenActive) return;
+                if (penActive[sid]) return;
                 draggingElement = el; dragSid = sid; dragLid = lid;
                 const rect = el.getBoundingClientRect();
-                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                let clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
                 dragOffset.x = clientX - rect.left; dragOffset.y = clientY - rect.top;
             };
             el.addEventListener('mousedown', startDrag); el.addEventListener('touchstart', startDrag);
@@ -257,24 +271,50 @@
             [3, 5, 6].forEach(id => {
                 const canvas = document.getElementById(`canvas-${id}`);
                 const ctx = canvas.getContext('2d');
-                const draw = (e) => {
-                    if(!drawing || !isPenActive) return;
+                
+                const getCoords = (e) => {
                     const rect = canvas.getBoundingClientRect();
-                    const x = (e.clientX || e.touches[0].clientX) - rect.left;
-                    const y = (e.clientY || e.touches[0].clientY) - rect.top;
+                    let clientX, clientY;
+                    if (e.touches) {
+                        clientX = e.touches[0].clientX;
+                        clientY = e.touches[0].clientY;
+                    } else {
+                        clientX = e.clientX;
+                        clientY = e.clientY;
+                    }
+                    return { x: clientX - rect.left, y: clientY - rect.top };
+                };
+                
+                const draw = (e) => {
+                    if(!drawing || !penActive[id]) return;
+                    const { x, y } = getCoords(e);
                     ctx.lineTo(x, y); ctx.stroke();
                 };
-                canvas.onmousedown = canvas.ontouchstart = (e) => { if(isPenActive) { drawing = true; ctx.beginPath(); draw(e); }};
+                
+                canvas.onmousedown = canvas.ontouchstart = (e) => { 
+                    if(penActive[id]) { 
+                        drawing = true; 
+                        ctx.beginPath(); 
+                        const { x, y } = getCoords(e);
+                        ctx.moveTo(x, y);
+                        draw(e); 
+                    }
+                };
                 canvas.onmousemove = canvas.ontouchmove = draw;
-                window.onmouseup = window.ontouchend = () => { if(drawing) { drawing = false; set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL()); }};
+                window.onmouseup = window.ontouchend = () => { 
+                    if(drawing) { 
+                        drawing = false; 
+                        set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL()); 
+                    }
+                };
             });
         }
 
         window.togglePen = (id) => {
-            isPenActive = !isPenActive;
+            penActive[id] = !penActive[id];
             document.querySelectorAll('.btn-action').forEach(b => b.classList.remove('pen-active'));
-            if(isPenActive) document.getElementById(`pen-btn-${id}`).classList.add('pen-active');
-            document.getElementById(`canvas-${id}`).classList.toggle('active', isPenActive);
+            if(penActive[id]) document.getElementById(`pen-btn-${id}`).classList.add('pen-active');
+            document.getElementById(`canvas-${id}`).classList.toggle('active', penActive[id]);
         };
 
         window.clearDrawings = (id) => {
@@ -302,6 +342,7 @@
         };
 
         window.postMutation = () => {
+            if (!window.userName) return alert("Log eerst in!");
             const txt = document.getElementById('mutationIn').value;
             if(!txt.trim()) return;
             push(ref(db, `classes/${window.currentClass}/feed`), { user: window.userName, text: txt, feedback: "" });
@@ -352,8 +393,11 @@
 
         function resizeCanvas(id) {
             const c = document.getElementById(`canvas-${id}`);
-            if(!c) return;
-            c.width = c.offsetWidth; c.height = c.offsetHeight;
+            if (!c) return;
+            const parent = c.parentElement;
+            if (!parent) return;
+            c.width = parent.clientWidth;
+            c.height = parent.clientHeight;
             const ctx = c.getContext('2d');
             ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#d32f2f';
         }
