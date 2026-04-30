@@ -16,6 +16,9 @@
         .screen { flex-grow: 1; display: none; width: 100%; height: calc(100vh - 60px); position: relative; overflow: hidden; }
         .screen.active { display: flex; flex-direction: column; }
 
+        /* Stijl voor de afbeelding achtergrond */
+        .bg-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1; pointer-events: none; }
+
         .drawing-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 500; pointer-events: none; }
         .drawing-canvas.active { pointer-events: auto; cursor: crosshair; }
         .drag-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
@@ -35,7 +38,7 @@
         .login-box { background: var(--white); padding: 30px; border-radius: 15px; text-align: center; width: 350px; }
         input[type="text"], select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
         
-        iframe, embed { width: 100%; height: 100%; border: none; }
+        iframe { width: 100%; height: 100%; border: none; }
         .pen-active-btn { background: #4caf50 !important; color: white !important; }
     </style>
 </head>
@@ -76,7 +79,22 @@
     <div id="screen-2" class="screen">
         <div class="content-container">
             <h1>Onderwerp van Les 3</h1>
-            <p>Hier kun je de specifieke uitleg voor les 3 neerzetten. Bijvoorbeeld over de volgende stappen in zinsontleding of een herhaling van de regels.</p>
+            <p>Doel:
+Herken het voltooid deelwoord:
+- werkwoord
+- géén persoonsvorm
+- de persoonsvorm is een vorm van
+
+‘zijn’→ ben, bent, zijn, was, waren
+’hebben’→ heb, heeft, hebben, had, hadden
+‘worden’→ word, wordt, worden, werd, werden
+(‘blijken’, ‘lijken’, ‘schijnen’)
+
+Schrijf het juiste voltooid deelwoord. De zinnen staan in de tegenwoordige tijd.
+De voltooide tijd mag je niet gebruiken in jouw pv's.
+Noteer daarna hoe de zin in jouw pv zou zijn.
+
+VRAAG AAN DE DOCENT OEFENING 2 EEN KEERTJE VOOR TE DOEN!</p>
         </div>
     </div>
 
@@ -92,8 +110,8 @@
     </div>
 
     <div id="screen-4" class="screen">
-        <!-- PAS HIER DE PDF NAAM AAN -->
-        <embed src="Q3lesmaterialQ1les3.png" type="application/pdf">
+        <!-- AFBEELDING 1 -->
+        <img src="Q3lesmaterialQ1les3.png" class="bg-image" alt="Lesmateriaal 1">
         <canvas id="canvas-4" class="drawing-canvas"></canvas>
         <div id="label-layer-4" class="drag-layer"></div>
         <div class="control-panel">
@@ -105,8 +123,8 @@
     </div>
 
     <div id="screen-5" class="screen">
-        <!-- PAS HIER DE PDF NAAM AAN -->
-        <embed src="les3_materiaal_deel2.pdf" type="application/pdf">
+        <!-- AFBEELDING 2 -->
+        <img src="Q3lesmaterialQ1les3.png" class="bg-image" alt="Lesmateriaal 2">
         <canvas id="canvas-5" class="drawing-canvas"></canvas>
         <div id="label-layer-5" class="drag-layer"></div>
         <div class="control-panel">
@@ -117,15 +135,13 @@
         </div>
     </div>
 
-    <!-- PAS HIER DE LEARNINGAPPS LINKS AAN -->
-    <div id="screen-6" class="screen"><iframe src="https://learningapps.org/watch?v=NIEUWE_LINK_A"></iframe></div>
+    <div id="screen-6" class="screen"><iframe src="https://learningapps.org/watch?v=pbsnzhgyn24"></iframe></div>
     <div id="screen-7" class="screen"><iframe src="https://learningapps.org/watch?v=NIEUWE_LINK_B"></iframe></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, onValue, push, remove, update, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.app";
 
-        // De Firebase config blijft hetzelfde zodat je dezelfde database kunt gebruiken
         const firebaseConfig = {
             apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
             authDomain: "aangifteq2les1.firebaseapp.com",
@@ -138,7 +154,6 @@
         window.currentClass = "";
         let isPenActive = false;
         let drawing = false;
-
         let draggingElement = null;
         let dragSid = null;
         let dragLid = null;
@@ -147,7 +162,6 @@
         window.login = () => {
             const klas = document.getElementById('classSelect').value;
             if(!klas) return alert("Kies een klas!");
-            // We voegen '-L3' toe aan de klasnaam in de database zodat les 2 en les 3 elkaar niet overschrijven
             window.currentClass = klas + "-L3"; 
             document.getElementById('main-nav').style.display = 'flex';
             window.showScreen(2);
@@ -251,13 +265,12 @@
             [3, 4, 5].forEach(id => {
                 onValue(ref(db, `classes/${window.currentClass}/labels/s${id}`), (snap) => {
                     const data = snap.val() || {};
-                    const container = document.getElementById(`label-layer-${id}`);
                     Object.keys(data).forEach(lid => {
                         let el = document.getElementById(`label-${lid}`);
                         if (!el) createHTMLLabel(id, lid, data[lid]);
                         else if (dragLid !== lid) { el.style.left = data[lid].x + 'px'; el.style.top = data[lid].y + 'px'; }
                     });
-                    container.querySelectorAll('.draggable-label').forEach(el => {
+                    document.getElementById(`label-layer-${id}`).querySelectorAll('.draggable-label').forEach(el => {
                         if (!data[el.id.replace('label-', '')]) el.remove();
                     });
                 });
