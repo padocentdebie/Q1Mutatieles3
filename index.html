@@ -203,46 +203,54 @@
     let drawing = false;
     let dragState = { draggingElement: null, screenId: null, labelKey: null, offsetX: 0, offsetY: 0 };
     
-    // init
+    // Login procedure
     window.login = async () => {
         const klas = document.getElementById('classSelect').value;
         const name = document.getElementById('studentName').value.trim();
-        if (!klas) return alert("Kies een klas!");
+        if (!klas) return alert("Kies eerst een klas!");
+        
         window.currentClass = klas;
         if(name) localStorage.setItem("lastStudent", name);
+        
+        await ensureClassData();
+
         document.getElementById('main-nav').style.display = 'flex';
         window.showScreen(2);
-        await ensureClassData();
+        
         setupAllSync();
         setupDrawingEvents();
         setupGlobalDrag();
         attachFeedbackAndTextListeners();
     };
-    
+
     async function ensureClassData() {
         const classRef = ref(db, `classes/${window.currentClass}`);
         const snap = await get(classRef);
         if(!snap.exists()) await set(classRef, { createdAt: Date.now() });
-        const textsRef = ref(db, `classes/${window.currentClass}/textMessages`);
-        const snapText = await get(textsRef);
-        if(!snapText.exists()) await set(textsRef, []);
-        const feedRef = ref(db, `classes/${window.currentClass}/feedbackMessages`);
-        if(!(await get(feedRef)).exists()) await set(feedRef, []);
     }
-    
+
+    // Centrale functie voor labels toevoegen
+    function addLabelToBoard(text, screenId) {
+        if (!text || !window.currentClass) return;
+        const labelRef = ref(db, `classes/${window.currentClass}/labels/s${screenId}`);
+        push(labelRef, {
+            text: text,
+            x: 100 + Math.random() * 50,
+            y: 100 + Math.random() * 50
+        });
+    }
+
     window.showScreen = (n) => {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(`screen-${n}`).classList.add('active');
         document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelector(`.nav-btn[data-screen="${n}"]`)?.classList.add('active');
-        [3,4,5].forEach(id => { if(document.getElementById(`canvas-${id}`)) resizeCanvas(id); });
-        if(isPenActive) { 
-            for(let id of [3,4,5]) document.getElementById(`canvas-${id}`)?.classList.remove('active');
-            isPenActive = false;
-            currentPenScreen = null;
+        
+        if([3,4,5].includes(n)) {
+            setTimeout(() => resizeCanvas(n), 50);
         }
     };
-    
+
     window.togglePen = (screenId) => {
         if(currentPenScreen !== screenId && isPenActive) {
             document.getElementById(`canvas-${currentPenScreen}`)?.classList.remove('active');
@@ -255,134 +263,170 @@
         const penBtn = document.getElementById(`pen-btn-${screenId}`);
         if(penBtn) penBtn.classList.toggle('pen-active-btn', isPenActive);
     };
-    
-    function setupDrawingEvents() {
-        [3,4,5].forEach(id => {
-            const canvas = document.getElementById(`canvas-${id}`);
-            if(!canvas) return;
-            const ctx = canvas.getContext('2d');
-            ctx.lineWidth = 3; ctx.strokeStyle = "#d32f2f"; ctx.lineCap = "round";
-            const getCoords = (e) => {
-                const rect = canvas.getBoundingClientRect();
-                const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : 0);
-                const clientY = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
-                return { x: clientX - rect.left, y: clientY - rect.top };
-            };
-            const startDraw = (e) => {
-                if(!isPenActive || currentPenScreen !== id) return;
-                drawing = true;
-                const {x,y} = getCoords(e);
-                ctx.beginPath(); ctx.moveTo(x,y);
-                e.preventDefault();
-            };
-            const drawMove = (e) => {
-                if(!drawing || !isPenActive || currentPenScreen !== id) return;
-                const {x,y} = getCoords(e);
-                ctx.lineTo(x,y); ctx.stroke();
-                e.preventDefault();
-            };
-            const endDraw = () => {
-                if(drawing) {
-                    drawing = false;
-                    const dataUrl = canvas.toDataURL();
-                    set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), dataUrl);
-                }
-            };
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', drawMove);
-            canvas.addEventListener('mouseup', endDraw);
-            canvas.addEventListener('touchstart', startDraw);
-            canvas.addEventListener('touchmove', drawMove);
-            canvas.addEventListener('touchend', endDraw);
-        });
+
+    // --- Drag & Drop Logica ---
+    function dragStart(e, screenId, labelKey, element) {
+        if(isPenActive) return; 
+        const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : 0);
+        const clientY = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
+        
+        dragState.draggingElement = element;
+        dragState.screenId = screenId;
+        dragState.labelKey = labelKey;
+        dragState.offsetX = clientX - element.offsetLeft;
+        dragState.offsetY = clientY - element.offsetTop;
+        element.style.zIndex = 2000;
     }
-    
+
     function setupGlobalDrag() {
         const onMove = (e) => {
             if(!dragState.draggingElement) return;
             const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : 0);
             const clientY = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
-            let left = clientX - dragState.offsetX;
-            let top = clientY - dragState.offsetY;
-            dragState.draggingElement.style.left = left + 'px';
-            dragState.draggingElement.style.top = top + 'px';
+            dragState.draggingElement.style.left = (clientX - dragState.offsetX) + 'px';
+            dragState.draggingElement.style.top = (clientY - dragState.offsetY) + 'px';
+            e.preventDefault();
         };
+
         const onEnd = () => {
-            if(dragState.draggingElement && dragState.screenId && dragState.labelKey) {
-                const x = parseInt(dragState.draggingElement.style.left) || 50;
-                const y = parseInt(dragState.draggingElement.style.top) || 50;
+            if(dragState.draggingElement) {
+                const x = parseInt(dragState.draggingElement.style.left);
+                const y = parseInt(dragState.draggingElement.style.top);
                 update(ref(db, `classes/${window.currentClass}/labels/s${dragState.screenId}/${dragState.labelKey}`), { x, y });
+                dragState.draggingElement.style.zIndex = 1001;
+                dragState.draggingElement = null;
             }
-            dragState.draggingElement = null;
         };
+
         window.addEventListener('mousemove', onMove);
         window.addEventListener('touchmove', onMove, { passive: false });
         window.addEventListener('mouseup', onEnd);
         window.addEventListener('touchend', onEnd);
     }
-    
+
+    // --- Sync & Database ---
     function setupAllSync() {
         [3,4,5].forEach(id => {
             onValue(ref(db, `classes/${window.currentClass}/labels/s${id}`), (snap) => {
                 const labels = snap.val() || {};
                 const container = document.getElementById(`label-layer-${id}`);
                 if(!container) return;
+
+                container.querySelectorAll('.draggable-label').forEach(el => {
+                    const key = el.getAttribute('data-key');
+                    if(!labels[key]) el.remove();
+                });
+
                 Object.keys(labels).forEach(key => {
-                    let el = document.getElementById(`label-${id}-${key}`);
+                    let el = container.querySelector(`[data-key="${key}"]`);
                     if(!el) {
                         el = document.createElement('div');
                         el.className = 'draggable-label';
-                        el.id = `label-${id}-${key}`;
-                        el.innerHTML = `<span>${labels[key].text || "label"}</span><i class="fa-solid fa-circle-xmark delete-icon"></i>`;
-                        el.querySelector('.delete-icon').addEventListener('click', (e) => {
+                        el.setAttribute('data-key', key);
+                        el.innerHTML = `<span>${labels[key].text}</span><i class="fa-solid fa-circle-xmark delete-icon"></i>`;
+                        el.querySelector('.delete-icon').onclick = (e) => {
                             e.stopPropagation();
                             remove(ref(db, `classes/${window.currentClass}/labels/s${id}/${key}`));
-                        });
-                        el.addEventListener('mousedown', (e) => { if(isPenActive && currentPenScreen===id) return; dragStart(e, id, key, el); });
-                        el.addEventListener('touchstart', (e) => { if(isPenActive && currentPenScreen===id) return; dragStart(e, id, key, el); });
+                        };
+                        el.addEventListener('mousedown', (e) => dragStart(e, id, key, el));
+                        el.addEventListener('touchstart', (e) => dragStart(e, id, key, el));
                         container.appendChild(el);
                     }
                     if(dragState.draggingElement !== el) {
-                        el.style.left = (labels[key].x || 50) + 'px';
-                        el.style.top = (labels[key].y || 50) + 'px';
+                        el.style.left = labels[key].x + 'px';
+                        el.style.top = labels[key].y + 'px';
                     }
                 });
-                container.querySelectorAll('.draggable-label').forEach(el => {
-                    const key = el.id.split('-')[2];
-                    if(!labels[key]) el.remove();
-                });
             });
+
             onValue(ref(db, `classes/${window.currentClass}/drawings/s${id}`), (snap) => {
                 const canvas = document.getElementById(`canvas-${id}`);
-                if(!canvas) return;
-                const img = new Image();
-                img.onload = () => { canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height); canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height); };
-                if(snap.val()) img.src = snap.val();
-                else canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+                const ctx = canvas.getContext('2d');
+                const val = snap.val();
+                if(val) {
+                    const img = new Image();
+                    img.onload = () => { ctx.clearRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0,canvas.width,canvas.height); };
+                    img.src = val;
+                } else {
+                    ctx.clearRect(0,0,canvas.width,canvas.height);
+                }
             });
         });
     }
-    
-    function dragStart(e, screenId, labelKey, element) {
-        if(isPenActive && currentPenScreen === screenId) return;
-        e.preventDefault();
-        const clientX = e.clientX ?? (e.touches ? e.touches[0].clientX : 0);
-        const clientY = e.clientY ?? (e.touches ? e.touches[0].clientY : 0);
-        dragState.draggingElement = element;
-        dragState.screenId = screenId;
-        dragState.labelKey = labelKey;
-        dragState.offsetX = clientX - element.offsetLeft;
-        dragState.offsetY = clientY - element.offsetTop;
-    }
-    
-    window.spawnLabels = (id) => {
-        ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"].forEach((text, idx) => {
-            push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text, x: 30 + (idx*20), y: 80 + (idx*55) });
+
+    function setupDrawingEvents() {
+        [3,4,5].forEach(id => {
+            const canvas = document.getElementById(`canvas-${id}`);
+            const ctx = canvas.getContext('2d');
+            const startDraw = (e) => {
+                if(!isPenActive || currentPenScreen !== id) return;
+                drawing = true;
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX ?? e.touches[0].clientX) - rect.left;
+                const y = (e.clientY ?? e.touches[0].clientY) - rect.top;
+                ctx.beginPath(); ctx.moveTo(x, y);
+            };
+            const draw = (e) => {
+                if(!drawing) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX ?? e.touches[0].clientX) - rect.left;
+                const y = (e.clientY ?? e.touches[0].clientY) - rect.top;
+                ctx.strokeStyle = "#d32f2f"; ctx.lineWidth = 3; ctx.lineTo(x, y); ctx.stroke();
+                e.preventDefault();
+            };
+            const endDraw = () => {
+                if(drawing) {
+                    drawing = false;
+                    set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL());
+                }
+            };
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            window.addEventListener('mouseup', endDraw);
+            canvas.addEventListener('touchstart', startDraw);
+            canvas.addEventListener('touchmove', draw, { passive: false });
+            window.addEventListener('touchend', endDraw);
         });
-    };
-    window.spawnDemoTextLabels = (id) => push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text: "✏️ Tekstdeel: 'hij heeft gewerkt'", x: 120, y: 100 });
-    window.spawnZinsLabels = (id) => push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text: "📖 persoonsvorm", x: 140, y: 150 });
-    window.clearDrawings = (id) => { const c = document.getElementById(`canvas-${id}`); if(c) c.getContext('2d').clearRect(0,0,c.width,c.height); remove(ref(db, `classes/${window.currentClass}/drawings/s${id}`)); };
+    }
+
+    function attachFeedbackAndTextListeners() {
+        // De fix voor de tekst op het bord plaatsen
+        document.getElementById('sendPreBtn').onclick = () => {
+            const txt = document.getElementById('secretInput').value.trim();
+            if(txt) {
+                addLabelToBoard(txt, 3);
+                document.getElementById('secretInput').value = "";
+            } else {
+                alert("Typ eerst een zin!");
+            }
+        };
+
+        document.getElementById('sendFeedback4').onclick = () => {
+            const msg = document.getElementById('feedbackInput4').value.trim();
+            if(msg) push(ref(db, `classes/${window.currentClass}/feedbackMessages`), { message: msg, author: "Docent", timestamp: Date.now() });
+            document.getElementById('feedbackInput4').value = '';
+        };
+
+        document.getElementById('sendFeedback5').onclick = () => {
+            const msg = document.getElementById('feedbackInput5').value.trim();
+            if(msg) push(ref(db, `classes/${window.currentClass}/feedbackMessages`), { message: msg, author: "Leerling", timestamp: Date.now() });
+            document.getElementById('feedbackInput5').value = '';
+        };
+    }
+
+    function resizeCanvas(id) {
+        const c = document.getElementById(`canvas-${id}`);
+        if(c && c.parentElement) {
+            c.width = c.parentElement.clientWidth;
+            c.height = c.parentElement.clientHeight;
+        }
+    }
+
+    // Oorspronkelijke label-teksten teruggezet
+    window.spawnLabels = (id) => ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"].forEach(t => addLabelToBoard(t, id));
+    window.spawnDemoTextLabels = (id) => addLabelToBoard("✏️ Tekstdeel: 'hij heeft gewerkt'", id);
+    window.spawnZinsLabels = (id) => addLabelToBoard("📖 persoonsvorm", id);
+    window.clearDrawings = (id) => remove(ref(db, `classes/${window.currentClass}/drawings/s${id}`));
     window.clearBoard = (id) => remove(ref(db, `classes/${window.currentClass}/labels/s${id}`));
     window.addBackgroundImage = (id) => {
         const canvas = document.getElementById(`canvas-${id}`);
@@ -391,50 +435,8 @@
         img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200'%3E%3Crect width='400' height='200' fill='%23f2e8cf'/%3E%3Ctext x='30' y='50' fill='%23003082' font-size='20'%3EQ3 lesmaterial.png%3C/text%3E%3Ctext x='30' y='100' fill='%23555555'%3EVoltooid deelwoord: gelopen, gemaakt%3C/text%3E%3C/svg%3E";
         img.onload = () => { ctx.drawImage(img, 0, 0, canvas.width, canvas.height); set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL()); };
     };
-    function resizeCanvas(id) { const c = document.getElementById(`canvas-${id}`); if(c && c.parentElement) { c.width = c.parentElement.clientWidth; c.height = c.parentElement.clientHeight - (c.nextElementSibling?.offsetHeight||0); c.getContext('2d')?.clearRect(0,0,c.width,c.height); } }
-    
-    function attachFeedbackAndTextListeners() {
-        const textRef = ref(db, `classes/${window.currentClass}/textMessages`);
-        const feedbackRef = ref(db, `classes/${window.currentClass}/feedbackMessages`);
-        onValue(textRef, (snap) => {
-            const msgs = snap.val() || [];
-            const container4 = document.getElementById('liveTextFeed');
-            const container5 = document.getElementById('liveTextFeed5');
-            if(container4) container4.innerHTML = msgs.slice(-8).map(m => `<div class="live-feed-message"><i class="fa-regular fa-user"></i> ${m.text || m}</div>`).join('');
-            if(container5) container5.innerHTML = msgs.slice(-8).map(m => `<div class="live-feed-message">📝 ${m.text || m}</div>`).join('');
-        });
-        onValue(feedbackRef, (snap) => {
-            const fb = snap.val() || [];
-            const area4 = document.getElementById('feedbackArea4');
-            const area5 = document.getElementById('feedbackArea5');
-            const html = fb.slice(-5).map(f => `<div class="live-feed-message">💬 ${f.author || "Docent"}: ${f.message}</div>`).join('');
-            if(area4) area4.innerHTML = html || "<em>Geen feedback</em>";
-            if(area5) area5.innerHTML = html || "<em>Geen feedback</em>";
-            const liveFeedS3 = document.getElementById('liveFeedbackScreen3');
-            if(liveFeedS3) liveFeedS3.innerHTML = fb.slice(-4).map(f => `<div>✨ ${f.message}</div>`).join('');
-        });
-        document.getElementById('sendFeedback4')?.addEventListener('click', () => {
-            const msg = document.getElementById('feedbackInput4').value.trim();
-            if(msg) push(feedbackRef, { message: msg, author: "docent/leerling", timestamp: Date.now() });
-            document.getElementById('feedbackInput4').value = '';
-        });
-        document.getElementById('sendFeedback5')?.addEventListener('click', () => {
-            const msg = document.getElementById('feedbackInput5').value.trim();
-            if(msg) push(feedbackRef, { message: msg, author: "leerling", timestamp: Date.now() });
-            document.getElementById('feedbackInput5').value = '';
-        });
-        document.getElementById('sendPreBtn')?.addEventListener('click', () => {
-            const txt = document.getElementById('secretInput').value.trim();
-            if(txt && window.currentClass) push(ref(db, `classes/${window.currentClass}/labels/s3`), { text: txt, x: 100 + Math.random()*80, y: 100 });
-        });
-    }
-    
-    window.sendToBoard = () => { const txt = document.getElementById('secretInput').value; if(txt) push(ref(db, `classes/${window.currentClass}/labels/s3`), { text: txt, x: 100, y: 100 }); };
-    document.getElementById('loginBtn')?.addEventListener('click', () => window.login());
+
+    document.getElementById('loginBtn').addEventListener('click', () => window.login());
     document.querySelectorAll('.nav-btn').forEach(btn => btn.addEventListener('click', () => { const scr = btn.getAttribute('data-screen'); if(scr) window.showScreen(parseInt(scr)); }));
-    window.addEventListener('resize', () => { [3,4,5].forEach(id => resizeCanvas(id)); });
-    // init image preview Q3
-    setTimeout(() => { const imgIns = document.getElementById('instructionImage'); if(imgIns) imgIns.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='120'%3E%3Crect width='300' height='120' fill='%23eef'/%3E%3Ctext x='20' y='40' fill='%23003082'%3EQ3lesmaterial.png - voorbeeld%3C/text%3E%3Ctext x='20' y='80' fill='gray'%3EVoltooid deelwoord: gevonden%3C/text%3E%3C/svg%3E"; }, 100);
 </script>
-</body>
 </html>
