@@ -124,198 +124,229 @@
     <div id="screen-6" class="screen"><iframe src="https://learningapps.org/watch?v=pbsnzhgyn24"></iframe></div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, push, remove, update, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.app";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue, push, remove, update, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.app";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
-            authDomain: "aangifteq2les1.firebaseapp.com",
-            databaseURL: "https://aangifteq2les1-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "aangifteq2les1",
+    const firebaseConfig = {
+        apiKey: "AIzaSyA3_rzoZOWytlyAbYKKe_WuFlD8z2WvbX4",
+        authDomain: "aangifteq2les1.firebaseapp.com",
+        databaseURL: "https://aangifteq2les1-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "aangifteq2les1",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Variabelen die we nodig hebben voor de interactie
+    window.currentClass = "";
+    let isPenActive = false;
+    let drawing = false;
+    let draggingElement = null;
+    let dragSid = null;
+    let dragLid = null;
+    let dragOffset = { x: 0, y: 0 };
+
+    // --- DE GEFIXTE LOGIN FUNCTIE ---
+    window.login = () => {
+        const classDropdown = document.getElementById('classSelect');
+        const studentName = document.getElementById('studentName').value.trim();
+        const klas = classDropdown.value;
+
+        // Validatie
+        if (!klas) {
+            alert("Selecteer eerst je klas!");
+            return;
+        }
+
+        // Klas instellen (bijv. "Alpha-L3")
+        window.currentClass = klas + "-L3"; 
+
+        // Direct naar de uitleg navigeren
+        document.getElementById('main-nav').style.display = 'flex';
+        window.showScreen(2);
+
+        // Firebase op de achtergrond initialiseren
+        setupSync();
+        setupDrawing();
+        setupGlobalDragEvents();
+
+        console.log(`Ingelogd als ${studentName || 'Anoniem'} in klas ${window.currentClass}`);
+    };
+
+    // --- NAVIGATIE ---
+    window.showScreen = (n) => {
+        // Verberg alle schermen
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        
+        // Toon het gekozen scherm
+        const targetScreen = document.getElementById(`screen-${n}`);
+        if (targetScreen) {
+            targetScreen.classList.add('active');
+        }
+
+        // Update de knoppen in de navigatiebalk
+        document.querySelectorAll('.nav-btn').forEach((btn, index) => {
+            // Check of de knop correspondeert met het schermnummer
+            // In jouw HTML is de eerste knop n=2, de tweede n=3, etc.
+            const screenNum = index + 2; 
+            btn.classList.toggle('active', screenNum === n);
+        });
+
+        // Resize canvas als we naar een tekenscherm gaan
+        if(n >= 3 && n <= 5) {
+            setTimeout(() => resizeCanvas(n), 100);
+        }
+    };
+
+    // --- DE REST VAN DE LOGICA (Sync, Drag, Draw) ---
+    // Zorg dat deze functies binnen de module blijven of aan window hangen waar nodig
+
+    function setupGlobalDragEvents() {
+        const onMove = (e) => {
+            if (!draggingElement) return;
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            draggingElement.style.left = (clientX - dragOffset.x) + 'px';
+            draggingElement.style.top = (clientY - dragOffset.y) + 'px';
         };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        window.currentClass = "";
-        let isPenActive = false;
-        let drawing = false;
-        let draggingElement = null;
-        let dragSid = null;
-        let dragLid = null;
-        let dragOffset = { x: 0, y: 0 };
-
-        // --- LOGIN ---
-        window.login = () => {
-            const klas = document.getElementById('classSelect').value;
-            if(!klas) return alert("Kies een klas!");
-            
-            window.currentClass = klas + "-L3"; 
-            document.getElementById('main-nav').style.display = 'flex';
-            window.showScreen(2);
-
-            // Start systemen
-            setupSync();
-            setupDrawing();
-            setupGlobalDragEvents();
-        };
-
-        window.showScreen = (n) => {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            const targetScreen = document.getElementById(`screen-${n}`);
-            if (targetScreen) targetScreen.classList.add('active');
-
-            document.querySelectorAll('.nav-btn').forEach((btn) => {
-                const btnAction = btn.getAttribute('onclick');
-                btn.classList.toggle('active', btnAction === `showScreen(${n})`);
+        const onEnd = () => {
+            if (!draggingElement) return;
+            update(ref(db, `classes/${window.currentClass}/labels/s${dragSid}/${dragLid}`), { 
+                x: parseInt(draggingElement.style.left), 
+                y: parseInt(draggingElement.style.top) 
             });
+            draggingElement = null;
+        };
+        window.addEventListener('mousemove', onMove); window.addEventListener('touchmove', onMove);
+        window.addEventListener('mouseup', onEnd); window.addEventListener('touchend', onEnd);
+    }
 
-            if(n >= 3 && n <= 5) {
-                setTimeout(() => resizeCanvas(n), 100);
-            }
+    function createHTMLLabel(sid, lid, obj) {
+        const el = document.createElement('div');
+        el.className = 'draggable-label';
+        el.id = `label-${lid}`;
+        el.style.left = obj.x + 'px'; el.style.top = obj.y + 'px';
+        el.innerHTML = `<span>${obj.text}</span><i class="fa-solid fa-circle-xmark delete-icon"></i>`;
+        
+        el.querySelector('.delete-icon').onclick = (e) => {
+            e.stopPropagation();
+            remove(ref(db, `classes/${window.currentClass}/labels/s${sid}/${lid}`));
         };
 
-        // --- DRAG & DROP ---
-        function setupGlobalDragEvents() {
-            const onMove = (e) => {
-                if (!draggingElement) return;
-                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-                draggingElement.style.left = (clientX - dragOffset.x) + 'px';
-                draggingElement.style.top = (clientY - dragOffset.y) + 'px';
-            };
-            const onEnd = () => {
-                if (!draggingElement) return;
-                update(ref(db, `classes/${window.currentClass}/labels/s${dragSid}/${dragLid}`), { 
-                    x: parseInt(draggingElement.style.left), 
-                    y: parseInt(draggingElement.style.top) 
-                });
-                draggingElement = null;
-            };
-            window.addEventListener('mousemove', onMove); window.addEventListener('touchmove', onMove);
-            window.addEventListener('mouseup', onEnd); window.addEventListener('touchend', onEnd);
-        }
-
-        function createHTMLLabel(sid, lid, obj) {
-            const el = document.createElement('div');
-            el.className = 'draggable-label';
-            el.id = `label-${lid}`;
-            el.style.left = obj.x + 'px'; el.style.top = obj.y + 'px';
-            el.innerHTML = `<span>${obj.text}</span><i class="fa-solid fa-circle-xmark delete-icon"></i>`;
-            
-            el.querySelector('.delete-icon').onclick = (e) => {
-                e.stopPropagation();
-                remove(ref(db, `classes/${window.currentClass}/labels/s${sid}/${lid}`));
-            };
-
-            const startDrag = (e) => {
-                if (isPenActive) return;
-                draggingElement = el; dragSid = sid; dragLid = lid;
-                const rect = el.getBoundingClientRect();
-                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-                dragOffset.x = clientX - rect.left; dragOffset.y = clientY - rect.top;
-            };
-
-            el.addEventListener('mousedown', startDrag); el.addEventListener('touchstart', startDrag);
-            document.getElementById(`label-layer-${sid}`).appendChild(el);
-        }
-
-        // --- DRAWING ---
-        function setupDrawing() {
-            [3, 4, 5].forEach(id => {
-                const canvas = document.getElementById(`canvas-${id}`);
-                const ctx = canvas.getContext('2d');
-                const draw = (e) => {
-                    if(!drawing || !isPenActive) return;
-                    ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#d32f2f';
-                    const rect = canvas.getBoundingClientRect();
-                    const x = (e.clientX || e.touches[0].clientX) - rect.left;
-                    const y = (e.clientY || e.touches[0].clientY) - rect.top;
-                    ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y);
-                };
-                canvas.onmousedown = canvas.ontouchstart = (e) => { if(isPenActive) { drawing = true; draw(e); }};
-                canvas.onmousemove = canvas.ontouchmove = draw;
-                window.onmouseup = window.ontouchend = () => { if(drawing) { drawing = false; ctx.beginPath(); saveDrawing(id, canvas); }};
-            });
-        }
-
-        window.togglePen = (id) => {
-            isPenActive = !isPenActive;
-            document.querySelectorAll('.nav-btn, button').forEach(b => b.classList.remove('pen-active-btn'));
-            if(isPenActive) document.getElementById(`pen-btn-${id}`).classList.add('pen-active-btn');
-            document.getElementById(`canvas-${id}`).classList.toggle('active', isPenActive);
+        const startDrag = (e) => {
+            if (isPenActive) return;
+            draggingElement = el; dragSid = sid; dragLid = lid;
+            const rect = el.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            dragOffset.x = clientX - rect.left; dragOffset.y = clientY - rect.top;
         };
 
-        function saveDrawing(id, canvas) {
-            set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL());
-        }
+        el.addEventListener('mousedown', startDrag); el.addEventListener('touchstart', startDrag);
+        document.getElementById(`label-layer-${sid}`).appendChild(el);
+    }
 
-        window.clearDrawings = (id) => {
+    function setupDrawing() {
+        [3, 4, 5].forEach(id => {
             const canvas = document.getElementById(`canvas-${id}`);
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            remove(ref(db, `classes/${window.currentClass}/drawings/s${id}`));
-        };
+            const ctx = canvas.getContext('2d');
+            const draw = (e) => {
+                if(!drawing || !isPenActive) return;
+                ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#d32f2f';
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+                const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+                ctx.lineTo(x, y); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y);
+            };
+            canvas.onmousedown = canvas.ontouchstart = (e) => { if(isPenActive) { drawing = true; draw(e); }};
+            canvas.onmousemove = canvas.ontouchmove = draw;
+            window.onmouseup = window.ontouchend = () => { if(drawing) { drawing = false; ctx.beginPath(); saveDrawing(id, canvas); }};
+        });
+    }
 
-        window.clearBoard = (id) => remove(ref(db, `classes/${window.currentClass}/labels/s${id}`));
+    window.togglePen = (id) => {
+        isPenActive = !isPenActive;
+        document.querySelectorAll('.control-panel button').forEach(b => b.classList.remove('pen-active-btn'));
+        if(isPenActive) document.getElementById(`pen-btn-${id}`).classList.add('pen-active-btn');
+        document.getElementById(`canvas-${id}`).classList.toggle('active', isPenActive);
+    };
 
-        // --- SYNC ---
-        function setupSync() {
-            [3, 4, 5].forEach(id => {
-                onValue(ref(db, `classes/${window.currentClass}/labels/s${id}`), (snap) => {
-                    const data = snap.val() || {};
-                    Object.keys(data).forEach(lid => {
-                        let el = document.getElementById(`label-${lid}`);
-                        if (!el) createHTMLLabel(id, lid, data[lid]);
-                        else if (draggingElement !== el) { el.style.left = data[lid].x + 'px'; el.style.top = data[lid].y + 'px'; }
-                    });
-                    document.getElementById(`label-layer-${id}`).querySelectorAll('.draggable-label').forEach(el => {
-                        if (!data[el.id.replace('label-', '')]) el.remove();
-                    });
+    function saveDrawing(id, canvas) {
+        set(ref(db, `classes/${window.currentClass}/drawings/s${id}`), canvas.toDataURL());
+    }
+
+    window.clearDrawings = (id) => {
+        const canvas = document.getElementById(`canvas-${id}`);
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        remove(ref(db, `classes/${window.currentClass}/drawings/s${id}`));
+    };
+
+    window.clearBoard = (id) => remove(ref(db, `classes/${window.currentClass}/labels/s${id}`));
+
+    function setupSync() {
+        [3, 4, 5].forEach(id => {
+            onValue(ref(db, `classes/${window.currentClass}/labels/s${id}`), (snap) => {
+                const data = snap.val() || {};
+                const layer = document.getElementById(`label-layer-${id}`);
+                
+                Object.keys(data).forEach(lid => {
+                    let el = document.getElementById(`label-${lid}`);
+                    if (!el) createHTMLLabel(id, lid, data[lid]);
+                    else if (draggingElement !== el) { 
+                        el.style.left = data[lid].x + 'px'; 
+                        el.style.top = data[lid].y + 'px'; 
+                    }
                 });
                 
-                onValue(ref(db, `classes/${window.currentClass}/drawings/s${id}`), (snap) => {
-                    if(drawing) return;
-                    const canvas = document.getElementById(`canvas-${id}`);
-                    const img = new Image();
-                    img.onload = () => {
-                        canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
-                        canvas.getContext('2d').drawImage(img, 0, 0);
-                    };
-                    if(snap.val()) img.src = snap.val();
-                    else canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+                layer.querySelectorAll('.draggable-label').forEach(el => {
+                    if (!data[el.id.replace('label-', '')]) el.remove();
                 });
             });
+            
+            onValue(ref(db, `classes/${window.currentClass}/drawings/s${id}`), (snap) => {
+                if(drawing) return;
+                const canvas = document.getElementById(`canvas-${id}`);
+                const img = new Image();
+                img.onload = () => {
+                    canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                };
+                if(snap.val()) img.src = snap.val();
+                else canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+            });
+        });
+    }
+
+    window.spawnLabels = (id) => {
+        const sets = {
+            3: ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"],
+            4: ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"],
+            5: ["Persoonsvorm", "Onderwerp", "Gezegde", "Lijdend voorwerp", "Meewerkend voorwerp", "Bijwoordelijke bepaling"]
+        };
+        sets[id].forEach((t, i) => push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text: t, x: 50, y: 80 + (i*60) }));
+    };
+
+    window.sendToBoard = () => {
+        const secret = document.getElementById('secretInput').value;
+        const klas = document.getElementById('classSelect').value;
+        if(!klas || !secret.trim()) return alert("Kies een klas en typ tekst!");
+        const targetClass = klas + "-L3";
+        push(ref(db, `classes/${targetClass}/labels/s3`), { text: secret, x: 150, y: 150 });
+        document.getElementById('secretInput').value = "";
+    };
+
+    function resizeCanvas(id) {
+        const canvas = document.getElementById(`canvas-${id}`);
+        if(canvas) { 
+            canvas.width = canvas.offsetWidth; 
+            canvas.height = canvas.offsetHeight; 
         }
+    }
 
-        window.spawnLabels = (id) => {
-            const sets = {
-                3: ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"],
-                4: ["Aanleiding", "Situatie", "Toedracht", "Maatregelen", "Afhandeling"],
-                5: ["Persoonsvorm", "Onderwerp", "Gezegde", "Lijdend voorwerp", "Meewerkend voorwerp", "Bijwoordelijke bepaling"]
-            };
-            sets[id].forEach((t, i) => push(ref(db, `classes/${window.currentClass}/labels/s${id}`), { text: t, x: 50, y: 80 + (i*60) }));
-        };
-
-        window.sendToBoard = () => {
-            const secret = document.getElementById('secretInput').value;
-            const klas = document.getElementById('classSelect').value;
-            if(!klas || !secret.trim()) return alert("Kies een klas en typ tekst!");
-            const targetClass = klas + "-L3";
-            push(ref(db, `classes/${targetClass}/labels/s3`), { text: secret, x: 150, y: 150 });
-            document.getElementById('secretInput').value = "";
-        };
-
-        function resizeCanvas(id) {
-            const canvas = document.getElementById(`canvas-${id}`);
-            if(canvas) { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
-        }
-
-        window.resetInputs = () => {
-            document.getElementById('studentName').value = "";
-            document.getElementById('classSelect').selectedIndex = 0;
-            document.getElementById('secretInput').value = "";
-        };
-    </script>
-</body>
+    window.resetInputs = () => {
+        document.getElementById('studentName').value = "";
+        document.getElementById('classSelect').selectedIndex = 0;
+        document.getElementById('secretInput').value = "";
+    };
+</script></body>
 </html>
