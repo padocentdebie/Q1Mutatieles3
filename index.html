@@ -72,18 +72,27 @@
                 <textarea id="secretInput" placeholder="Typ hier een zin voor het digibord (Scherm 3)..."></textarea>
                 <button onclick="sendToBoard()" style="background:#666; color:white; border:none; padding:10px; width:100%; border-radius:6px; cursor:pointer;">Stuur naar Scherm 3</button>
                 <button onclick="login()" style="background:var(--primary); color:white; border:none; padding:15px; width:100%; border-radius:6px; font-weight:bold; cursor:pointer; margin-top:10px;">Start Training</button>
+                
+                <!-- TOTALE RESET KNOP -->
+                <button onclick="resetDatabase()" style="background:var(--accent); color:white; border:none; padding:10px; width:100%; border-radius:6px; font-weight:bold; cursor:pointer; margin-top:20px; font-size: 0.8em;">TOTALE RESET DATABASE</button>
             </div>
         </div>
     </div>
 
     <!-- Scherm 2: Instructie -->
-    <div id="screen-2" class="screen">
-        <div class="content-container">
-            <h2>Instructie: Onvoltooid Verleden Tijd (OVT)</h2>
-            
-            <h3>Zoek de persoonsvorm</h3>
-            <p>Is het een vorm van <strong>'hebben'</strong>, <strong>'zijn'</strong> of <strong>'worden'</strong>?<br>
-            <strong style="color: var(--accent);">Let dan op! Ik stop.</strong></p>
+<div id="screen-2" class="screen">
+    <div class="content-container">
+        <h2>Instructie: Onvoltooid Verleden Tijd (OVT)</h2>
+        
+        <h3>Zoek de persoonsvorm</h3>
+        <p style="color: var(--primary); font-weight: bold;">
+            De verdachte <span style="color: var(--accent);">is</span> direct <span style="color: var(--accent);">gevlucht</span>.
+        </p>
+        
+        <h3>Zoek het gezegde</h3>
+        <p>Het tweede werkwoord in het gezegde is vaak een <strong>voltooid deelwoord</strong>.</p>
+        
+        <!-- ... rest van de tekst blijft gelijk ... -->
             
             <h3>Zoek het gezegde</h3>
             <p>Het tweede werkwoord in het gezegde is vaak een <strong>voltooid deelwoord</strong>.</p>
@@ -201,6 +210,17 @@
             setupSync();
             setupDrawing();
             setupGlobalDragEvents();
+        };
+
+        // RESET DATABASE FUNCTIE
+        window.resetDatabase = () => {
+            const klas = document.getElementById('classSelect').value;
+            if(!klas) return alert("Selecteer eerst een klas om te resetten!");
+            if(confirm(`Weet je zeker dat je ALLE data voor klas ${klas} wilt wissen?`)) {
+                remove(ref(db, `classes/${klas}`))
+                    .then(() => alert(`Database voor klas ${klas} is volledig gereset.`))
+                    .catch((error) => alert("Fout bij resetten: " + error.message));
+            }
         };
 
         window.showScreen = (n) => {
